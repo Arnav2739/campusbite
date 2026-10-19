@@ -27,7 +27,7 @@ This document tracks the end-to-end development progress, sprint milestones, and
 | **M4: Database Seeder** | Sprint 1 | Pushkar | ✅ Completed | 16 menu items, 8 slots, 2 test users seeded |
 | **M5: Auth Engine & Security** | Sprint 2 | Aditya | ⏳ In Progress | JWT auth, User schema, role guards, axios interceptor |
 | **M6: Frontend Shell & Auth Flow** | Sprint 2 | Riya | ⏳ In Progress | `AuthContext`, `Navbar`, `LandingPage`, `LoginRegister` |
-| **M7: Time Slots & Cart Engine** | Sprint 2 | Arnav | ⏳ In Progress | Slot capacity checks, `CartContext`, `CartDrawer`, `CheckoutPage` |
+| **M7: Time Slots & Cart Engine** | Sprint 2 | Arnav | ✅ Completed | Slot capacity checks, `CartContext`, `CartDrawer`, `CheckoutPage` |
 | **M8: Order Processing & Tracking** | Sprint 3 | Vedanti | ⏳ Scheduled | Order creation, `CB-XXX` token generator, live progress stepper |
 | **M9: Kitchen Queue & Analytics** | Sprint 3 | Anish | ⏳ Scheduled | Kitchen queue Kanban, status updates, sales aggregation |
 | **M10: Postman Testing & Project Review** | Sprint 4 | Team | 📅 Scheduled | Postman test suite, final slides, and viva preparation |
@@ -71,12 +71,12 @@ This document tracks the end-to-end development progress, sprint milestones, and
 
 ### 4. Arnav (Time Slots Engine, Cart & Checkout)
 - **Branch:** `feat/arnav-slots-checkout`
-- **Progress:** 0% (Scaffolded Starter Ready)
-- [ ] Implement `server/models/TimeSlot.js` with capacity tracking
-- [ ] Implement `GET /api/slots` returning real-time available spots
-- [ ] Build `client/src/context/CartContext.jsx` with price calculation
-- [ ] Build `client/src/components/CartDrawer.jsx` slide-over component
-- [ ] Build `client/src/pages/CheckoutPage.jsx` with 15-minute slot picker and mock payment
+- **Progress:** 100% (Completed across 10 Conventional Commits)
+- [x] Implement `server/models/TimeSlot.js` with capacity tracking & atomic reservation
+- [x] Implement `GET /api/slots` returning real-time available spots & urgency badges
+- [x] Build `client/src/context/CartContext.jsx` with localStorage persistence & price calculation
+- [x] Build `client/src/components/CartDrawer.jsx` slide-over component with quantity steppers & bill summary
+- [x] Build `client/src/pages/CheckoutPage.jsx` with 15-minute slot picker, mock UPI/Wallet payment & token receipt
 
 ### 5. Vedanti (Order Processing Engine, Pickup Token & Tracking)
 - **Branch:** `feat/vedanti-orders-tracking`
@@ -101,6 +101,21 @@ This document tracks the end-to-end development progress, sprint milestones, and
 
 ## 📝 Daily Change Log
 
+### [2026-10-19] - Time Slots Engine, Cart & Checkout Release
+- **Author:** Arnav
+- **Branch:** `feat/arnav-slots-checkout`
+- Delivered complete milestone M7 split cleanly across 10 atomic conventional commits:
+  1. `feat(slots-model)`: Enhanced `TimeSlot` schema with virtual `availableSpots`, `isFull`, and atomic reservation/release methods to prevent overbooking.
+  2. `feat(slots-controller)`: Implemented `slotController.js` computing capacity, urgency statuses (`available`, `filling-fast`, `full`), and resilient offline fallback data.
+  3. `feat(slots-routes)`: Mounted `/api/slots`, `/api/slots/test`, and `/api/slots/:id` onto Express router.
+  4. `feat(cart-context)`: Built core cart state management (`addToCart`, `updateQuantity`, `removeFromCart`, `clearCart`).
+  5. `feat(cart-storage)`: Added `localStorage` persistence, drawer visibility toggles, and financial price math (Subtotal, GST 5%, Tray fee, Grand Total).
+  6. `feat(cart-ui)`: Created slide-over `CartDrawer` with backdrop blur, scroll locking, and Escape key dismissal.
+  7. `feat(cart-items)`: Built item list cards with thumbnails, dietary dots, quantity steppers, itemized bill breakdown, and empty tray prompt.
+  8. `feat(checkout-slots)`: Developed interactive 15-minute pickup slot grid in `CheckoutPage.jsx` with real-time capacity badges.
+  9. `feat(checkout-payment)`: Implemented mock payment modal (UPI QR, Campus Wallet, Card), 1.5s simulated processing spinner, and digital pickup token receipt card.
+  10. `docs(progress)`: Documented full milestone M7 completion and changelog in `progress_log.md`.
+
 ### [2026-10-19] - Initial Repository Scaffolding & Phase 1 Release
 - **Author:** Pushkar (Lead)
 - Created project folder structure with separate `server/` and `client/` directories.
@@ -112,3 +127,4 @@ This document tracks the end-to-end development progress, sprint milestones, and
 - Implemented `FoodCard.jsx` and `MenuPage.jsx` frontend components with Tailwind CSS.
 - Created `start.bat` automated runner and `requirements.txt` onboarding guide.
 - Pushed initial 8 atomic conventional commits to `main` branch.
+
