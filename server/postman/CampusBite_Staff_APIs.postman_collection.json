@@ -1,0 +1,219 @@
+{
+  "info": {
+    "name": "CampusBite — Staff APIs (Anish)",
+    "_postman_id": "anish-staff-dashboard-collection",
+    "description": "Postman collection for all Staff Kitchen & Analytics endpoints.\nBranch: feat/anish-staff-dashboard\nAuthor: Anish\n\nBase URL: http://localhost:5000/api\n\nHow to use:\n1. Set the 'token' collection variable to a valid staff JWT.\n2. Run requests in order: Kitchen Queue → Update Status → Toggle Stock → Analytics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "PASTE_STAFF_JWT_HERE",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "PASTE_ORDER_ID_HERE",
+      "type": "string"
+    },
+    {
+      "key": "menuItemId",
+      "value": "PASTE_MENU_ITEM_ID_HERE",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Get Kitchen Queue",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/staff/kitchen-queue",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff", "kitchen-queue"]
+        },
+        "description": "GET /api/staff/kitchen-queue\n\nReturns all active orders with status Placed, Preparing, or Ready.\nSorted by timeSlot then createdAt (oldest first).\nPopulates: studentId (name, rollNumber), timeSlotId (slotLabel).\n\nExpected: 200 OK — array of order objects."
+      },
+      "response": [
+        {
+          "name": "200 OK — Active Orders",
+          "status": "OK",
+          "code": 200,
+          "body": "[\n  {\n    \"_id\": \"67139c99fed11\",\n    \"pickupToken\": \"CB-104\",\n    \"orderStatus\": \"Placed\",\n    \"totalAmount\": 90,\n    \"studentId\": { \"name\": \"Riya Sharma\", \"rollNumber\": \"CS2026-042\" },\n    \"timeSlotId\": { \"slotLabel\": \"12:15 PM - 12:30 PM\" },\n    \"items\": [\n      { \"name\": \"Crispy Samosa (2 pcs)\", \"quantity\": 2, \"price\": 30 },\n      { \"name\": \"Cold Coffee with Ice Cream\", \"quantity\": 1, \"price\": 60 }\n    ]\n  }\n]"
+        }
+      ]
+    },
+    {
+      "name": "2. Update Order Status → Preparing",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderStatus\": \"Preparing\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/staff/orders/{{orderId}}/status",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff", "orders", "{{orderId}}", "status"]
+        },
+        "description": "PATCH /api/staff/orders/:id/status\n\nMoves an order forward in the lifecycle.\nAllowed values: Placed | Preparing | Ready | Completed | Cancelled\n\nExpected: 200 OK with updated order object.\nExpected (invalid status): 400 Bad Request.\nExpected (order not found): 404 Not Found."
+      },
+      "response": [
+        {
+          "name": "200 OK — Status Updated",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"message\": \"Order status updated\",\n  \"order\": {\n    \"_id\": \"67139c99fed11\",\n    \"orderStatus\": \"Preparing\",\n    \"pickupToken\": \"CB-104\",\n    \"studentId\": { \"name\": \"Riya Sharma\", \"rollNumber\": \"CS2026-042\" }\n  }\n}"
+        },
+        {
+          "name": "400 Bad Request — Invalid Status",
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"message\": \"Invalid status. Allowed values: Placed, Preparing, Ready, Completed, Cancelled\"\n}"
+        },
+        {
+          "name": "404 Not Found — Order Missing",
+          "status": "Not Found",
+          "code": 404,
+          "body": "{\n  \"message\": \"Order not found\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "3. Update Order Status → Ready",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderStatus\": \"Ready\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/staff/orders/{{orderId}}/status",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff", "orders", "{{orderId}}", "status"]
+        },
+        "description": "Same endpoint as above — moves order from Preparing → Ready."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Update Order Status → Completed",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderStatus\": \"Completed\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/staff/orders/{{orderId}}/status",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff", "orders", "{{orderId}}", "status"]
+        },
+        "description": "Marks order as Completed — removes it from kitchen queue view."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Toggle Menu Item Stock",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/staff/menu/{{menuItemId}}/toggle",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff", "menu", "{{menuItemId}}", "toggle"]
+        },
+        "description": "PATCH /api/staff/menu/:id/toggle\n\nFlips the isAvailable flag on a menu item.\nCall once → marks as Unavailable (sold out).\nCall again → marks as Available.\n\nExpected: 200 OK with updated menuItem.\nExpected (item not found): 404 Not Found."
+      },
+      "response": [
+        {
+          "name": "200 OK — Toggled to Unavailable",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"message\": \"\\\"Crispy Samosa (2 pcs)\\\" is now UNAVAILABLE\",\n  \"menuItem\": {\n    \"_id\": \"67139a01bce23\",\n    \"name\": \"Crispy Samosa (2 pcs)\",\n    \"isAvailable\": false\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "6. Get Daily Analytics",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/staff/analytics",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff", "analytics"]
+        },
+        "description": "GET /api/staff/analytics\n\nReturns today's canteen performance summary:\n- todayRevenue: total ₹ earned (excludes cancelled orders)\n- totalOrders, completedOrders, pendingOrders, cancelledOrders\n- topSellingItems: top 5 items by quantity sold\n\nExpected: 200 OK with analytics object."
+      },
+      "response": [
+        {
+          "name": "200 OK — Analytics",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"todayRevenue\": 14250,\n  \"totalOrders\": 128,\n  \"completedOrders\": 114,\n  \"pendingOrders\": 14,\n  \"cancelledOrders\": 3,\n  \"topSellingItems\": [\n    { \"name\": \"Crispy Samosa (2 pcs)\", \"count\": 64 },\n    { \"name\": \"Cold Coffee with Ice Cream\", \"count\": 45 },\n    { \"name\": \"Special Veg Thali\", \"count\": 32 },\n    { \"name\": \"Paneer Kathi Roll\", \"count\": 28 },\n    { \"name\": \"Masala Chai\", \"count\": 21 }\n  ]\n}"
+        }
+      ]
+    }
+  ]
+}
