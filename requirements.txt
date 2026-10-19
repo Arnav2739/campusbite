@@ -1,0 +1,115 @@
+# ==============================================================================
+# CampusBite - Project Requirements & Teammate Setup Guide
+# Full Stack Development (FSD) Project
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. SYSTEM PREREQUISITES
+# ------------------------------------------------------------------------------
+# Install these on your local system before running the project:
+# - Node.js: >= 18.0.0 (Recommended: Node LTS 20+)
+# - npm: >= 9.0.0
+# - MongoDB: v7.0 or Docker Desktop (with docker compose)
+# - Git: >= 2.30.0
+# - Code Editor: Visual Studio Code / Antigravity
+
+# ------------------------------------------------------------------------------
+# 2. BACKEND (server/) DEPENDENCIES (Node.js + Express)
+# ------------------------------------------------------------------------------
+# express==4.21.0           -> Web server framework
+# mongoose==8.7.0          -> MongoDB ODM and schema management
+# dotenv==16.4.5           -> Environment variable loader
+# cors==2.8.5              -> Cross-Origin Resource Sharing middleware
+# bcryptjs==2.4.3          -> Password hashing for student & staff accounts
+# jsonwebtoken==9.0.2      -> JWT generation and bearer token authentication
+# nodemon==3.1.7 (dev)     -> Auto-restarts server on code changes
+
+# ------------------------------------------------------------------------------
+# 3. FRONTEND (client/) DEPENDENCIES (React + Vite + Tailwind)
+# ------------------------------------------------------------------------------
+# react==19.2.8            -> UI library
+# react-dom==19.2.8        -> React DOM bindings
+# react-router-dom==7.x    -> Client-side declarative routing
+# axios==1.7.x             -> HTTP API client with JWT interceptor
+# lucide-react==1.x        -> Modern vector icons
+# tailwindcss==4.x         -> Utility-first CSS styling
+# @tailwindcss/vite==4.x   -> Tailwind Vite plugin integration
+
+# ------------------------------------------------------------------------------
+# 4. ENVIRONMENT VARIABLES (server/.env)
+# ------------------------------------------------------------------------------
+# Copy server/.env.example to server/.env:
+# PORT=5000
+# MONGO_URI=mongodb://127.0.0.1:27017/campusbite
+# JWT_SECRET=campusbite_super_secret_jwt_key_2026
+
+# ------------------------------------------------------------------------------
+# 5. QUICK CLONE & START INSTRUCTIONS FOR TEAMMATES
+# ------------------------------------------------------------------------------
+# 1. Clone repository:
+#    git clone https://github.com/rajmane4-boop/campusbite.git
+#    cd campusbite
+#
+# 2. Double-click "start.bat" (on Windows) OR run manually:
+#
+#    Backend:
+#      cd server
+#      npm install
+#      npm run seed    # (Optional: seeds initial 16 items and test users)
+#      npm run dev
+#
+#    Frontend:
+#      cd client
+#      npm install
+#      npm run dev
+#
+# 3. Access URLs:
+#    - Frontend UI:  http://localhost:5173
+#    - Backend API:  http://localhost:5000
+#
+# ------------------------------------------------------------------------------
+# 6. DEDICATED FILE ASSIGNMENTS (DO NOT EDIT server.js OR App.jsx)
+# ------------------------------------------------------------------------------
+# - Aditya:  feat/aditya-auth-security
+#   -> server/models/User.js
+#   -> server/controllers/authController.js
+#   -> server/routes/authRoutes.js
+#   -> server/middleware/authMiddleware.js
+#   -> server/middleware/errorMiddleware.js
+#   -> client/src/api/axiosInstance.js
+#
+# - Riya:    feat/riya-auth-ui
+#   -> client/src/context/AuthContext.jsx
+#   -> client/src/components/Navbar.jsx
+#   -> client/src/components/ProtectedRoute.jsx
+#   -> client/src/pages/LandingPage.jsx
+#   -> client/src/pages/LoginRegister.jsx
+#   -> client/src/pages/ProfileHistory.jsx
+#
+# - Pushkar: feat/pushkar-menu-module (Lead / Catalog Module)
+#   -> server/models/MenuItem.js
+#   -> server/controllers/menuController.js
+#   -> server/routes/menuRoutes.js
+#   -> server/seed/seed.js
+#   -> client/src/components/FoodCard.jsx
+#   -> client/src/pages/MenuPage.jsx
+#
+# - Arnav:   feat/arnav-slots-checkout
+#   -> server/models/TimeSlot.js
+#   -> server/controllers/slotController.js
+#   -> server/routes/slotRoutes.js
+#   -> client/src/context/CartContext.jsx
+#   -> client/src/components/CartDrawer.jsx
+#   -> client/src/pages/CheckoutPage.jsx
+#
+# - Vedanti: feat/vedanti-orders-tracking
+#   -> server/models/Order.js
+#   -> server/controllers/orderController.js
+#   -> server/routes/orderRoutes.js
+#   -> client/src/components/OrderTokenBadge.jsx
+#   -> client/src/pages/OrderTrackingPage.jsx
+#
+# - Anish:   feat/anish-staff-dashboard
+#   -> server/controllers/staffController.js
+#   -> server/routes/staffRoutes.js
+#   -> client/src/pages/StaffDashboard.jsx
