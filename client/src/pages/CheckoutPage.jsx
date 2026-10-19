@@ -14,6 +14,13 @@ import {
   ChevronRight,
   CreditCard,
   RefreshCw,
+  Wallet,
+  QrCode,
+  X,
+  Check,
+  Smartphone,
+  Receipt,
+  ArrowUpRight,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import axiosInstance from '../api/axiosInstance';
@@ -41,11 +48,23 @@ const CheckoutPage = () => {
     totalItemCount,
     selectedSlot,
     setSelectedSlot,
+    clearCart,
   } = useCart();
 
   const [slots, setSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [slotError, setSlotError] = useState(null);
+
+  // Payment Modal & Flow State
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('upi'); // 'wallet' | 'upi' | 'card'
+  const [processingState, setProcessingState] = useState('idle'); // 'idle' | 'processing' | 'success'
+  const [processingStepText, setProcessingStepText] = useState('');
+  const [confirmedOrder, setConfirmedOrder] = useState(null);
+
+  // Student Info Details
+  const [studentName, setStudentName] = useState('Riya Sharma');
+  const [rollNumber, setRollNumber] = useState('CS2026-042');
 
   // Fetch available slots from backend with resilient fallback
   useEffect(() => {
@@ -55,7 +74,6 @@ const CheckoutPage = () => {
         const res = await axiosInstance.get('/slots');
         if (Array.isArray(res.data) && res.data.length > 0) {
           setSlots(res.data);
-          // If no slot is selected or previous selection is invalid, pick the first available one
           if (!selectedSlot) {
             const firstAvailable = res.data.find((s) => !s.isFull && s.availableSpots > 0);
             if (firstAvailable) setSelectedSlot(firstAvailable);
@@ -86,8 +104,91 @@ const CheckoutPage = () => {
     setSelectedSlot(slot);
   };
 
-  // If cart is empty, render friendly empty prompt
-  if (cartItems.length === 0) {
+  // Trigger Mock Payment & Order Creation Simulation
+  const handleProcessPayment = async () => {
+    if (!selectedSlot) {
+      setSlotError('Please choose a pickup slot before paying.');
+      return;
+    }
+
+    setProcessingState('processing');
+    setProcessingStepText('Connecting to Campus Payment Gateway...');
+
+    // 1.5-second realistic simulated processing steps
+    setTimeout(() => {
+      setProcessingStepText(`Processing ₹${grandTotal} via ${paymentMethod.toUpperCase()}...`);
+    }, 600);
+
+    setTimeout(() => {
+      setProcessingStepText(`Securing counter slot: ${selectedSlot.slotLabel}...`);
+    }, 1100);
+
+    setTimeout(async () => {
+      let createdOrderData = null;
+
+      try {
+        // Attempt backend POST /api/orders
+        const orderPayload = {
+          timeSlotId: selectedSlot._id,
+          items: cartItems.map((item) => ({
+            menuItemId: item._id,
+            name: item.name,
+            quantity: item.quantity || 1,
+            price: item.price,
+          })),
+          totalAmount: grandTotal,
+          paymentStatus: 'Completed',
+          paymentMethod,
+          studentName,
+          rollNumber,
+        };
+
+        const res = await axiosInstance.post('/orders', orderPayload);
+        if (res.data && res.data.pickupToken) {
+          createdOrderData = res.data;
+        }
+      } catch (err) {
+        console.warn('Backend /api/orders unavailable, creating resilient local order:', err.message);
+      }
+
+      // Generate realistic daily pickup token (e.g. CB-248) if backend is still in scaffolding
+      if (!createdOrderData) {
+        const randomNum = Math.floor(100 + Math.random() * 900);
+        createdOrderData = {
+          _id: `order_${Date.now()}`,
+          pickupToken: `CB-${randomNum}`,
+          orderStatus: 'Placed',
+          paymentStatus: 'Completed',
+          totalAmount: grandTotal,
+          slotLabel: selectedSlot.slotLabel,
+          timeSlotId: selectedSlot._id,
+          items: cartItems,
+          studentName,
+          rollNumber,
+          createdAt: new Date().toISOString(),
+        };
+      } else {
+        createdOrderData.slotLabel = selectedSlot.slotLabel;
+      }
+
+      // Save latest order in localStorage for OrderTrackingPage & ProfileHistory integration
+      try {
+        localStorage.setItem('campusbite_latest_order', JSON.stringify(createdOrderData));
+        const pastOrders = JSON.parse(localStorage.getItem('campusbite_past_orders') || '[]');
+        pastOrders.unshift(createdOrderData);
+        localStorage.setItem('campusbite_past_orders', JSON.stringify(pastOrders.slice(0, 10)));
+      } catch (e) {
+        console.warn('Failed saving order history locally:', e);
+      }
+
+      setConfirmedOrder(createdOrderData);
+      setProcessingState('success');
+      clearCart();
+    }, 1500);
+  };
+
+  // If cart is empty and not in confirmed state, render empty prompt
+  if (cartItems.length === 0 && !confirmedOrder) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-16">
         <div className="max-w-md w-full bg-white rounded-3xl p-8 text-center border border-gray-100 shadow-xl">
@@ -315,8 +416,9 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* Proceed to Payment Action Button */}
+              {/* Open Payment Modal Button */}
               <button
+                onClick={() => setIsPaymentModalOpen(true)}
                 disabled={!selectedSlot || selectedSlot.isFull}
                 className={`w-full py-3.5 px-4 rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
                   !selectedSlot || selectedSlot.isFull
@@ -331,9 +433,280 @@ const CheckoutPage = () => {
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* Interactive Mock Payment Modal                                            */}
+      {/* ========================================================================= */}
+      {isPaymentModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            onClick={() => processingState !== 'processing' && setIsPaymentModalOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+          />
+
+          <div className="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 z-10 transition-all">
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-orange-600 to-amber-600 text-white flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                  <Receipt className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">Campus Checkout</h3>
+                  <p className="text-xs text-orange-100">Slot: {selectedSlot?.slotLabel}</p>
+                </div>
+              </div>
+
+              {processingState !== 'processing' && (
+                <button
+                  onClick={() => setIsPaymentModalOpen(false)}
+                  className="p-1.5 text-white/80 hover:text-white rounded-lg hover:bg-white/10 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              {processingState === 'processing' ? (
+                // 1.5s Processing Spinner Screen
+                <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="relative w-16 h-16">
+                    <div className="w-16 h-16 rounded-full border-4 border-orange-100 border-t-orange-600 animate-spin" />
+                    <Sparkles className="w-6 h-6 text-orange-500 absolute inset-0 m-auto" />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-bold text-gray-900">Processing Payment...</h4>
+                    <p className="text-xs text-orange-600 font-semibold mt-1 animate-pulse">
+                      {processingStepText}
+                    </p>
+                  </div>
+                  <p className="text-[11px] text-gray-400 max-w-xs">
+                    Please do not close or refresh your browser while the canteen order token is being generated.
+                  </p>
+                </div>
+              ) : processingState === 'success' && confirmedOrder ? (
+                // Order Confirmed Success Screen with Token Badge
+                <div className="py-4 text-center space-y-5">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+                    <CheckCircle2 className="w-10 h-10" />
+                  </div>
+
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                      Payment Successful & Slot Reserved
+                    </span>
+                    <h3 className="text-xl font-black text-gray-900 mt-2">Order Confirmed!</h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Present this digital token at the express pickup counter
+                    </p>
+                  </div>
+
+                  {/* High Impact Digital Pickup Token Badge */}
+                  <div className="p-5 bg-gradient-to-b from-orange-50 to-amber-50/60 border-2 border-dashed border-orange-300 rounded-3xl relative overflow-hidden">
+                    <div className="text-xs font-bold text-orange-600 uppercase tracking-widest">
+                      Digital Pickup Token
+                    </div>
+                    <div className="text-4xl font-black text-gray-900 tracking-tight my-2 font-mono">
+                      {confirmedOrder.pickupToken}
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-800 bg-white px-3 py-1 rounded-xl shadow-xs border border-orange-200">
+                      <Clock className="w-3.5 h-3.5 text-orange-600" />
+                      <span>{confirmedOrder.slotLabel}</span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-3">
+                      Canteen Counter 2 • Hot Meals & Quick Snacks
+                    </p>
+                  </div>
+
+                  {/* Action Navigation Buttons */}
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <button
+                      onClick={() => {
+                        setIsPaymentModalOpen(false);
+                        navigate('/order-tracking');
+                      }}
+                      className="py-3 px-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-500/20 flex items-center justify-center gap-1.5"
+                    >
+                      <span>Track Order</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsPaymentModalOpen(false);
+                        navigate('/menu');
+                      }}
+                      className="py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition"
+                    >
+                      Back to Menu
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // Payment Method Selector Form
+                <div className="space-y-5">
+                  {/* Student Details Review */}
+                  <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200/80 grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-[11px] text-gray-500 block">Student Name</span>
+                      <input
+                        type="text"
+                        value={studentName}
+                        onChange={(e) => setStudentName(e.target.value)}
+                        className="font-bold text-gray-900 bg-transparent outline-none w-full border-b border-transparent focus:border-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-gray-500 block">Roll / Staff ID</span>
+                      <input
+                        type="text"
+                        value={rollNumber}
+                        onChange={(e) => setRollNumber(e.target.value)}
+                        className="font-bold text-gray-900 bg-transparent outline-none w-full border-b border-transparent focus:border-orange-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Payment Method Selector Tabs */}
+                  <div>
+                    <label className="text-xs font-bold text-gray-700 block mb-2.5">
+                      Select Payment Mode
+                    </label>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {/* UPI QR Option */}
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('upi')}
+                        className={`p-3 rounded-2xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
+                          paymentMethod === 'upi'
+                            ? 'border-orange-500 bg-orange-50/70 text-orange-900 ring-2 ring-orange-500 shadow-xs'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        <QrCode className="w-5 h-5 text-orange-600" />
+                        <span className="text-xs font-bold">UPI QR</span>
+                      </button>
+
+                      {/* Campus Wallet Option */}
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('wallet')}
+                        className={`p-3 rounded-2xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
+                          paymentMethod === 'wallet'
+                            ? 'border-orange-500 bg-orange-50/70 text-orange-900 ring-2 ring-orange-500 shadow-xs'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        <Wallet className="w-5 h-5 text-emerald-600" />
+                        <span className="text-xs font-bold">Campus Wallet</span>
+                      </button>
+
+                      {/* Card Option */}
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('card')}
+                        className={`p-3 rounded-2xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
+                          paymentMethod === 'card'
+                            ? 'border-orange-500 bg-orange-50/70 text-orange-900 ring-2 ring-orange-500 shadow-xs'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        <CreditCard className="w-5 h-5 text-indigo-600" />
+                        <span className="text-xs font-bold">Card</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Interactive Details for Selected Payment Mode */}
+                  {paymentMethod === 'upi' && (
+                    <div className="p-4 bg-orange-50/40 border border-orange-200 rounded-2xl flex flex-col items-center text-center space-y-3">
+                      <div className="w-36 h-36 bg-white p-2.5 rounded-2xl border-2 border-orange-200 shadow-xs flex items-center justify-center">
+                        {/* Simulated QR Code Graphics */}
+                        <div className="w-full h-full bg-gray-900 rounded-lg flex flex-col items-center justify-center text-white text-[10px] p-2 leading-tight font-mono">
+                          <QrCode className="w-12 h-12 text-white mb-1" />
+                          <span>SCAN & PAY</span>
+                          <span className="text-amber-400 font-bold">₹{grandTotal}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-xs font-bold text-gray-800">canteen@campusbite.upi</span>
+                        <p className="text-[11px] text-gray-500">
+                          Supports GPay, PhonePe, Paytm, and BHIM
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {paymentMethod === 'wallet' && (
+                    <div className="p-4 bg-emerald-50/50 border border-emerald-200 rounded-2xl space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-emerald-900">Student Wallet Balance:</span>
+                        <span className="font-extrabold text-emerald-700 text-sm">₹550.00</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-emerald-800/80">
+                        <span>Deduction for this meal:</span>
+                        <span className="font-bold text-gray-900">- ₹{grandTotal}.00</span>
+                      </div>
+                      <div className="border-t border-emerald-200 pt-2 flex items-center justify-between text-xs font-bold text-emerald-900">
+                        <span>Balance after payment:</span>
+                        <span>₹{550 - grandTotal}.00</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {paymentMethod === 'card' && (
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-3 text-xs">
+                      <div>
+                        <span className="text-gray-500 block mb-1 text-[11px]">Card Number</span>
+                        <input
+                          type="text"
+                          readOnly
+                          value="•••• •••• •••• 4242"
+                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 font-mono font-bold text-gray-700"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-gray-500 block mb-1 text-[11px]">Valid Thru</span>
+                          <input
+                            type="text"
+                            readOnly
+                            value="12/28"
+                            className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 font-mono text-gray-700"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-gray-500 block mb-1 text-[11px]">CVV</span>
+                          <input
+                            type="password"
+                            readOnly
+                            value="•••"
+                            className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 font-mono text-gray-700"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pay Button */}
+                  <button
+                    onClick={handleProcessPayment}
+                    className="w-full py-3.5 px-4 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition active:scale-[0.98]"
+                  >
+                    <span>Pay ₹{grandTotal} & Confirm Pickup Slot</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default CheckoutPage;
+
 
