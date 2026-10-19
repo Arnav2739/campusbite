@@ -4,6 +4,16 @@ CampusBite is a full-stack campus canteen pre-ordering application designed to s
 
 ---
 
+## 📖 Project Documentation
+
+Detailed project documentation is maintained inside the [`docs/`](file:///d:/MCA/SEM3/FSD%20Project/campusbite/docs) directory:
+- 📈 **[Project Progress & Milestones](file:///d:/MCA/SEM3/FSD%20Project/campusbite/docs/progress_log.md)** - Track phase status, sprint milestones, and individual task checklists.
+- 🏛️ **[System Architecture & ERD](file:///d:/MCA/SEM3/FSD%20Project/campusbite/docs/architecture.md)** - 3-tier architecture, Mongoose schemas, ER diagram, and state machines.
+- 📚 **[API Reference Manual](file:///d:/MCA/SEM3/FSD%20Project/campusbite/docs/api_reference.md)** - Full request/response contracts for all 13 REST API endpoints.
+- 🤝 **[Team & Git Guidelines](file:///d:/MCA/SEM3/FSD%20Project/campusbite/docs/team_guidelines.md)** - Branch naming conventions, Conventional Commits, and PR review process.
+
+---
+
 ## 👥 Team Members & Contribution Breakdown
 
 | Member | Role & Module | Responsibilities |
