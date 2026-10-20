@@ -191,12 +191,94 @@ const createOrder = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/orders/my-orders
+ * Retrieves the logged-in student's order history, sorted by newest first.
+ * Supports ?status=active query filter to retrieve only in-progress orders.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getMyOrders = async (req, res) => {
-  res.json({ message: 'Get my orders endpoint placeholder' });
+  try {
+    const studentId = req.user?._id || req.query.studentId;
+
+    if (!studentId) {
+      return res.status(401).json({ message: 'Authentication required to view orders' });
+    }
+
+    const { status } = req.query;
+    const filter = { studentId };
+
+    if (status === 'active') {
+      filter.orderStatus = { $in: ['Placed', 'Preparing', 'Ready'] };
+    } else if (status === 'completed') {
+      filter.orderStatus = 'Completed';
+    }
+
+    const orders = await Order.find(filter)
+      .populate('timeSlotId', 'slotLabel maxCapacity bookedCount')
+      .populate('items.menuItemId', 'name category price isVeg imageUrl')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      count: orders.length,
+      orders,
+    });
+  } catch (error) {
+    console.error('Error fetching student orders:', error);
+    return res.status(500).json({
+      message: 'Failed to retrieve order history',
+      error: error.message,
+    });
+  }
 };
 
+/**
+ * GET /api/orders/:id
+ * Retrieves live status of a single order by MongoDB ObjectId or pickup token (e.g. CB-104).
+ * Used by OrderTrackingPage for real-time polling updates.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getOrderById = async (req, res) => {
-  res.json({ message: 'Get order by ID endpoint placeholder' });
+  try {
+    const { id } = req.params;
+
+    if (!id || id.trim() === '') {
+      return res.status(400).json({ message: 'Order ID or pickup token is required' });
+    }
+
+    // Support lookup by MongoDB ObjectId OR pickupToken (e.g. CB-104)
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+    const query = isObjectId ? { _id: id } : { pickupToken: id.toUpperCase().trim() };
+
+    const order = await Order.findOne(query)
+      .populate('studentId', 'name email rollNumber')
+      .populate('timeSlotId', 'slotLabel maxCapacity bookedCount')
+      .populate('items.menuItemId', 'name category price isVeg imageUrl');
+
+    if (!order) {
+      return res.status(404).json({ message: `Order "${id}" not found` });
+    }
+
+    // Role-based security check if user is attached
+    if (req.user && req.user.role !== 'staff') {
+      const orderStudentId = order.studentId?._id || order.studentId;
+      if (orderStudentId && orderStudentId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Forbidden — you can only track your own orders' });
+      }
+    }
+
+    return res.status(200).json(order);
+  } catch (error) {
+    console.error('Error fetching order by ID:', error);
+    return res.status(500).json({
+      message: 'Failed to retrieve order details',
+      error: error.message,
+    });
+  }
 };
 
 module.exports = {
