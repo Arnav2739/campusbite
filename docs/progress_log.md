@@ -4,14 +4,14 @@ This document tracks the end-to-end development progress, sprint milestones, and
 
 ---
 
-## 🚦 Overall Project Status: `Phase 1 Complete (Foundation & Menu Module)`
+## 🚦 Overall Project Status: `Phase 2 in Progress (3 of 6 Modules Merged)`
 
 ```text
-[████████████░░░░░░░░░░░░] 40% Total Project Completion
+[████████████████░░░░░░░░] 60% Total Project Completion
 ```
 
 - **Phase 1 (Lead Setup & Foundation):** ✅ 100% Completed
-- **Phase 2 (Individual Feature Branches):** ⏳ In Progress
+- **Phase 2 (Individual Feature Branches):** ⏳ In Progress (Pushkar, Arnav, Anish completed; Aditya, Riya, Vedanti in progress)
 - **Phase 3 (Integration & QA Testing):** 📅 Scheduled
 - **Phase 4 (Final Deployment & Documentation):** 📅 Scheduled
 
@@ -29,7 +29,7 @@ This document tracks the end-to-end development progress, sprint milestones, and
 | **M6: Frontend Shell & Auth Flow** | Sprint 2 | Riya | ⏳ In Progress | `AuthContext`, `Navbar`, `LandingPage`, `LoginRegister` |
 | **M7: Time Slots & Cart Engine** | Sprint 2 | Arnav | ✅ Completed | Slot capacity checks, `CartContext`, `CartDrawer`, `CheckoutPage` |
 | **M8: Order Processing & Tracking** | Sprint 3 | Vedanti | ⏳ Scheduled | Order creation, `CB-XXX` token generator, live progress stepper |
-| **M9: Kitchen Queue & Analytics** | Sprint 3 | Anish | ⏳ Scheduled | Kitchen queue Kanban, status updates, sales aggregation |
+| **M9: Kitchen Queue & Analytics** | Sprint 3 | Anish | ✅ Completed | Kitchen queue Kanban, status updates, sales aggregation |
 | **M10: Postman Testing & Project Review** | Sprint 4 | Team | 📅 Scheduled | Postman test suite, final slides, and viva preparation |
 
 ---
@@ -89,17 +89,25 @@ This document tracks the end-to-end development progress, sprint milestones, and
 
 ### 6. Anish (Kitchen Dashboard, Analytics & QA Testing)
 - **Branch:** `feat/anish-staff-dashboard`
-- **Progress:** 0% (Scaffolded Starter Ready)
-- [ ] Implement `GET /api/staff/kitchen-queue` sorted by pickup slot
-- [ ] Implement `PATCH /api/staff/orders/:id/status` (Placed -> Preparing -> Ready -> Completed)
-- [ ] Implement `PATCH /api/staff/menu/:id/toggle` for kitchen stock management
-- [ ] Implement `GET /api/staff/analytics` with MongoDB `$match` and `$group` aggregation
-- [ ] Build `client/src/pages/StaffDashboard.jsx` (Live Kitchen Queue, Stock Manager, Sales KPIs)
-- [ ] Export `CampusBite.postman_collection.json` and finalize documentation
+- **Progress:** 100% (Completed across 3 Pull Requests & Merged to Main)
+- [x] Implement `GET /api/staff/kitchen-queue` sorted by pickup slot
+- [x] Implement `PATCH /api/staff/orders/:id/status` (Placed -> Preparing -> Ready -> Completed)
+- [x] Implement `PATCH /api/staff/menu/:id/toggle` for kitchen stock management
+- [x] Implement `GET /api/staff/analytics` with MongoDB `$match` and `$group` aggregation
+- [x] Build `client/src/pages/StaffDashboard.jsx` (Live Kitchen Queue, Stock Manager, Sales KPIs)
+- [x] Export `CampusBite_Staff_APIs.postman_collection.json` and finalize documentation
 
 ---
 
 ## 📝 Daily Change Log
+
+### [2026-10-20] - Staff Kitchen Queue, Stock Manager & Analytics Release
+- **Author:** Anish
+- **Branch:** `feat/anish-staff-dashboard`
+- Delivered milestone M9 across 3 Pull Requests merged into `main`:
+  1. `feat(staff)`: Implemented staff controller and route endpoints (`/api/staff/kitchen-queue`, `/api/staff/orders/:id/status`, `/api/staff/menu/:id/toggle`, `/api/staff/analytics`) with chronological queue sorting and sales metric aggregation.
+  2. `feat(staff)`: Built responsive `StaffDashboard.jsx` featuring Kanban queue boards, 10s auto-refresh polling, forward status action triggers, stock management toggles, and daily sales KPI cards.
+  3. `docs(staff)`: Exported `CampusBite_Staff_APIs.postman_collection.json` covering all staff endpoints with JWT environment variables for QA testing.
 
 ### [2026-10-19] - Time Slots Engine, Cart & Checkout Release
 - **Author:** Arnav
