@@ -113,8 +113,31 @@ const loginUser = async (req, res) => {
   }
 };
 
+// @desc    Get current logged-in user's profile
+// @route   GET /api/auth/me
+// @access  Private (requires protect middleware)
 const getMe = async (req, res) => {
-  res.json({ message: 'User profile placeholder' });
+  try {
+    // req.user is already attached by protect middleware (without passwordHash)
+    const user = req.user;
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      rollNumber: user.rollNumber,
+      phone: user.phone,
+      role: user.role,
+      avatar: user.avatar,
+      createdAt: user.createdAt,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 module.exports = {

@@ -50,9 +50,17 @@ const protect = async (req, res, next) => {
   }
 };
 
+// @desc    Restrict access to staff-only routes
+// @usage   router.patch('/admin-action', protect, staffOnly, handler)
+// @note    Must be used AFTER protect middleware (needs req.user)
 const staffOnly = (req, res, next) => {
-  // Teammate Aditya will implement role checking logic in next commit
-  next();
+  if (req.user && req.user.role === 'staff') {
+    next();
+  } else {
+    return res.status(403).json({
+      message: 'Forbidden — staff access only',
+    });
+  }
 };
 
 module.exports = { protect, staffOnly };
