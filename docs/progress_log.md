@@ -28,7 +28,7 @@ This document tracks the end-to-end development progress, sprint milestones, and
 | **M5: Auth Engine & Security** | Sprint 2 | Aditya | ⏳ In Progress | JWT auth, User schema, role guards, axios interceptor |
 | **M6: Frontend Shell & Auth Flow** | Sprint 2 | Riya | ⏳ In Progress | `AuthContext`, `Navbar`, `LandingPage`, `LoginRegister` |
 | **M7: Time Slots & Cart Engine** | Sprint 2 | Arnav | ✅ Completed | Slot capacity checks, `CartContext`, `CartDrawer`, `CheckoutPage` |
-| **M8: Order Processing & Tracking** | Sprint 3 | Vedanti | ⏳ Scheduled | Order creation, `CB-XXX` token generator, live progress stepper |
+| **M8: Order Processing & Tracking** | Sprint 3 | Vedanti | ✅ Completed | Order creation, `CB-XXX` token generator, live progress stepper |
 | **M9: Kitchen Queue & Analytics** | Sprint 3 | Anish | ✅ Completed | Kitchen queue Kanban, status updates, sales aggregation |
 | **M10: Postman Testing & Project Review** | Sprint 4 | Team | 📅 Scheduled | Postman test suite, final slides, and viva preparation |
 
@@ -52,12 +52,12 @@ This document tracks the end-to-end development progress, sprint milestones, and
 
 ### 2. Aditya (Backend Authentication, Security & API Client)
 - **Branch:** `feat/aditya-auth-security`
-- **Progress:** 0% (Scaffolded Starter Ready)
-- [ ] Implement `server/models/User.js` with bcrypt password hashing
-- [ ] Implement `POST /api/auth/register` and `POST /api/auth/login`
-- [ ] Implement `GET /api/auth/me` profile endpoint
-- [ ] Build `authMiddleware.js` (`protect` and `staffOnly` guards)
-- [ ] Configure `client/src/api/axiosInstance.js` with automatic JWT header attachment
+- **Progress:** 100% (Completed and merged to `main`)
+- [x] Implement `server/models/User.js` with bcrypt password hashing
+- [x] Implement `POST /api/auth/register` and `POST /api/auth/login`
+- [x] Implement `GET /api/auth/me` profile endpoint
+- [x] Build `authMiddleware.js` (`protect` and `staffOnly` guards)
+- [x] Configure `client/src/api/axiosInstance.js` with automatic JWT header attachment
 
 ### 3. Riya (Frontend Auth Flow, Navigation Shell & History)
 - **Branch:** `feat/riya-auth-ui`
@@ -80,12 +80,13 @@ This document tracks the end-to-end development progress, sprint milestones, and
 
 ### 5. Vedanti (Order Processing Engine, Pickup Token & Tracking)
 - **Branch:** `feat/vedanti-orders-tracking`
-- **Progress:** 0% (Scaffolded Starter Ready)
-- [ ] Implement `server/models/Order.js` schema with item arrays and status enums
-- [ ] Implement `POST /api/orders` with atomic slot capacity decrement & `CB-XXX` token generator
-- [ ] Implement `GET /api/orders/my-orders` and `GET /api/orders/:id`
-- [ ] Build `client/src/components/OrderTokenBadge.jsx` pickup receipt card
-- [ ] Build `client/src/pages/OrderTrackingPage.jsx` with 4-stage live polling stepper
+- **Progress:** 100% (Completed across 9 Conventional Commits)
+- [x] Implement `server/models/Order.js` schema with item arrays and status enums
+- [x] Implement `POST /api/orders` with atomic slot capacity decrement & unique daily `CB-XXX` token generator
+- [x] Implement `GET /api/orders/my-orders` and `GET /api/orders/:id`
+- [x] Implement `PATCH /api/orders/:id/cancel` with atomic slot capacity release
+- [x] Build `client/src/components/OrderTokenBadge.jsx` pickup receipt card with QR code and copy token action
+- [x] Build `client/src/pages/OrderTrackingPage.jsx` with 4-stage live polling stepper and 10s auto-refresh
 
 ### 6. Anish (Kitchen Dashboard, Analytics & QA Testing)
 - **Branch:** `feat/anish-staff-dashboard`
@@ -100,6 +101,20 @@ This document tracks the end-to-end development progress, sprint milestones, and
 ---
 
 ## 📝 Daily Change Log
+ 
+### [2026-10-20] - Order Processing Engine, Pickup Token & Live Tracking Release
+- **Author:** Vedanti
+- **Branch:** `feat/vedanti-orders-tracking`
+- Delivered complete milestone M8 split cleanly across 9 atomic conventional commits:
+  1. `feat(order-model)`: Enhanced Mongoose `Order` schema with subtotal, tax math, packaging fee, status lifecycle timestamps, and compound indexing for rapid kitchen queue retrieval.
+  2. `feat(token-generator)`: Implemented daily unique `CB-XXX` token generator algorithm with calendar-day collision detection loops.
+  3. `feat(order-api)`: Implemented `POST /api/orders` with catalog stock validation and atomic slot reservation via `TimeSlot.reserveSlot()` to prevent overbooking.
+  4. `feat(order-api)`: Implemented `GET /api/orders/my-orders` for student history and `GET /api/orders/:id` for live polling lookup.
+  5. `feat(order-routes)`: Wired all order endpoints with JWT `protect` middleware and order cancellation logic.
+  6. `feat(token-badge)`: Built `OrderTokenBadge.jsx` digital canteen ticket pass with monospace token code, QR code simulation, and copy action.
+  7. `feat(tracking-stepper)`: Developed 4-stage visual stepper (`Placed` → `Preparing` → `Ready` → `Completed`) with dynamic progress fill bar.
+  8. `feat(tracking-polling)`: Implemented 10-second automated live polling, readiness alert banner, tray breakdown, and order cancellation.
+  9. `docs(progress)`: Documented full milestone M8 completion, API endpoints, and changelog in `progress_log.md` and `api_reference.md`.
 
 ### [2026-10-20] - Staff Kitchen Queue, Stock Manager & Analytics Release
 - **Author:** Anish
