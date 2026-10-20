@@ -196,7 +196,8 @@ Base URL: `http://localhost:5000/api`
 ### 4.3 Get Single Order Live Status (Polling)
 - **Method:** `GET`
 - **Endpoint:** `/orders/:id`
-- **Access:** Student Only
+- **Access:** Student / Staff
+- **Parameters:** `id` can be either MongoDB `_id` or `pickupToken` (e.g., `CB-104`)
 - **Response (200 OK):**
 ```json
 {
@@ -204,7 +205,33 @@ Base URL: `http://localhost:5000/api`
   "pickupToken": "CB-104",
   "orderStatus": "Preparing",
   "totalAmount": 60,
+  "slotLabel": "12:30 PM - 12:45 PM",
   "updatedAt": "2026-10-19T13:32:00.000Z"
+}
+```
+
+---
+
+### 4.4 Cancel Order (Releases Slot Capacity)
+- **Method:** `PATCH`
+- **Endpoint:** `/orders/:id/cancel`
+- **Access:** Student (Order Owner)
+- **Condition:** Order must strictly be in `'Placed'` status.
+- **Request Body:**
+```json
+{
+  "reason": "Need to attend laboratory lecture"
+}
+```
+- **Response (200 OK):**
+```json
+{
+  "message": "Order cancelled successfully and pickup spot released",
+  "order": {
+    "_id": "67139c99fed11",
+    "orderStatus": "Cancelled",
+    "pickupToken": "CB-104"
+  }
 }
 ```
 
