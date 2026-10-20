@@ -1,10 +1,19 @@
-// [Aditya] authMiddleware.js
-// Protect routes (JWT verification) and role guard (staffOnly)
+/**
+ * @file authMiddleware.js
+ * @description Authentication, authorization, and input validation middleware for CampusBite.
+ * @author Aditya (feat/aditya-auth-security)
+ */
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// @desc    Verify JWT token and attach user to request
-// @usage   router.get('/protected-route', protect, handler)
+/**
+ * Middleware: Verifies the incoming Bearer JWT token from Authorization header.
+ * Attaches the authenticated user document to req.user (excluding passwordHash).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const protect = async (req, res, next) => {
   let token;
 
@@ -50,9 +59,13 @@ const protect = async (req, res, next) => {
   }
 };
 
-// @desc    Restrict access to staff-only routes
-// @usage   router.patch('/admin-action', protect, staffOnly, handler)
-// @note    Must be used AFTER protect middleware (needs req.user)
+/**
+ * Middleware: Restricts route access strictly to users having the 'staff' role.
+ * MUST be chained AFTER the `protect` middleware.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const staffOnly = (req, res, next) => {
   if (req.user && req.user.role === 'staff') {
     next();
@@ -63,7 +76,28 @@ const staffOnly = (req, res, next) => {
   }
 };
 
-// @desc    Validate request body for user registration
+/**
+ * Middleware: Injects HTTP security headers on sensitive authentication endpoints.
+ * Prevents MIME sniffing, clickjacking, and browser caching of credentials.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+const securityHeaders = (req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+};
+
+/**
+ * Middleware: Validates the payload required to register a user.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const validateRegisterInput = (req, res, next) => {
   const { name, email, password, role } = req.body;
   const errors = [];
@@ -95,7 +129,12 @@ const validateRegisterInput = (req, res, next) => {
   next();
 };
 
-// @desc    Validate request body for login
+/**
+ * Middleware: Validates the payload required to log in.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const validateLoginInput = (req, res, next) => {
   const { email, password } = req.body;
   const errors = [];
@@ -121,8 +160,10 @@ const validateLoginInput = (req, res, next) => {
 module.exports = {
   protect,
   staffOnly,
+  securityHeaders,
   validateRegisterInput,
   validateLoginInput,
 };
+
 
 

@@ -1,8 +1,16 @@
-// [Aditya] User.js - Student and Staff Mongoose Model
-// Commit 1: Enhanced with bcrypt hashing, matchPassword, phone, avatar virtual
+/**
+ * @file User.js
+ * @description Mongoose model definition for CampusBite users (students & staff).
+ * Handles schema validation, password hashing using bcrypt, virtual avatars, and password comparison.
+ * @author Aditya (feat/aditya-auth-security)
+ */
+
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+/**
+ * Mongoose Schema for CampusBite User entities.
+ */
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -47,19 +55,24 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// --- Virtual: Generate avatar URL from user's name ---
+/**
+ * Virtual property: Generates a dynamically colored avatar URL based on the user's name.
+ * Uses UI-Avatars service.
+ */
 userSchema.virtual('avatar').get(function () {
   const encoded = encodeURIComponent(this.name || 'User');
   return `https://ui-avatars.com/api/?name=${encoded}&background=random&size=128`;
 });
 
-// Ensure virtuals are included in JSON and Object output
+// Ensure virtuals are serialized into JSON and Objects
 userSchema.set('toJSON', { virtuals: true });
 userSchema.set('toObject', { virtuals: true });
 
-// --- Pre-save hook: Hash password before saving ---
+/**
+ * Pre-save Mongoose hook to hash the plain text password before saving to the database.
+ * Uses bcrypt with 12 salt rounds for enhanced cryptographic security.
+ */
 userSchema.pre('save', async function (next) {
-  // Only hash if the passwordHash field has been modified (or is new)
   if (!this.isModified('passwordHash')) {
     return next();
   }
@@ -69,9 +82,14 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// --- Instance method: Compare entered password with stored hash ---
+/**
+ * Instance method to compare a plain-text password with the stored bcrypt hash.
+ * @param {string} enteredPassword - The plain text candidate password.
+ * @returns {Promise<boolean>} True if matching, false otherwise.
+ */
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.passwordHash);
 };
 
 module.exports = mongoose.model('User', userSchema);
+

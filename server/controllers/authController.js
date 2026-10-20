@@ -1,8 +1,19 @@
-// [Aditya] authController.js - Register, login, profile logic
+/**
+ * @file authController.js
+ * @description Authentication controller for CampusBite.
+ * Implements user registration, login credential verification, and profile retrieval.
+ * @author Aditya (feat/aditya-auth-security)
+ */
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// Helper: Generate JWT token with user id & role
+/**
+ * Generates a signed JSON Web Token (JWT) with user ID and role payload.
+ * Valid for 7 days.
+ * @param {Object} user - The mongoose user document.
+ * @returns {string} Signed JWT string.
+ */
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, role: user.role },
@@ -11,9 +22,13 @@ const generateToken = (user) => {
   );
 };
 
-// @desc    Register a new student or staff user
-// @route   POST /api/auth/register
-// @access  Public
+/**
+ * @desc    Register a new student or staff user
+ * @route   POST /api/auth/register
+ * @access  Public
+ * @param   {import('express').Request} req
+ * @param   {import('express').Response} res
+ */
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, rollNumber, phone, role } = req.body;
@@ -38,11 +53,11 @@ const registerUser = async (req, res) => {
 
     // --- Create new user (password hashed via pre-save hook) ---
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
       passwordHash: password,     // pre-save hook will bcrypt hash this
-      rollNumber: rollNumber || null,
-      phone: phone || null,
+      rollNumber: rollNumber ? rollNumber.trim() : null,
+      phone: phone ? phone.trim() : null,
       role: role || 'student',
     });
 
@@ -66,9 +81,13 @@ const registerUser = async (req, res) => {
   }
 };
 
-// @desc    Authenticate user & return JWT token
-// @route   POST /api/auth/login
-// @access  Public
+/**
+ * @desc    Authenticate user & return JWT token
+ * @route   POST /api/auth/login
+ * @access  Public
+ * @param   {import('express').Request} req
+ * @param   {import('express').Response} res
+ */
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -80,7 +99,7 @@ const loginUser = async (req, res) => {
     }
 
     // --- Find user by email ---
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
     if (!user) {
       res.status(401);
       throw new Error('Invalid email or password');
@@ -113,9 +132,13 @@ const loginUser = async (req, res) => {
   }
 };
 
-// @desc    Get current logged-in user's profile
-// @route   GET /api/auth/me
-// @access  Private (requires protect middleware)
+/**
+ * @desc    Get current logged-in user's profile
+ * @route   GET /api/auth/me
+ * @access  Private (requires protect middleware)
+ * @param   {import('express').Request} req
+ * @param   {import('express').Response} res
+ */
 const getMe = async (req, res) => {
   try {
     // req.user is already attached by protect middleware (without passwordHash)
@@ -145,4 +168,5 @@ module.exports = {
   loginUser,
   getMe,
 };
+
 

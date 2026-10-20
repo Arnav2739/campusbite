@@ -1,14 +1,30 @@
-// [Aditya] errorMiddleware.js
-// Global error handling & 404 middleware
+/**
+ * @file errorMiddleware.js
+ * @description Centralized error handling and 404 middleware for CampusBite.
+ * Intercepts Mongoose ValidationErrors, CastErrors, duplicate key constraints, and JWT exceptions.
+ * @author Aditya (feat/aditya-auth-security)
+ */
 
-// Catch-all 404 handler for undefined routes
+/**
+ * 404 Not Found catch-all middleware for handling unrecognized API endpoints.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const notFound = (req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
   res.status(404);
   next(error);
 };
 
-// Centralized error handler
+/**
+ * Centralized error-handling middleware.
+ * Sanitizes stack traces in production environments and structures error payloads.
+ * @param {Error} err
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const errorHandler = (err, req, res, next) => {
   let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   let message = err.message;
