@@ -281,9 +281,78 @@ const getOrderById = async (req, res) => {
   }
 };
 
+/**
+ * PATCH /api/orders/:id/cancel
+ * Allows a student to cancel an order, strictly while it is still in 'Placed' status.
+ * Automatically releases the timeSlot capacity back to the pool.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+const cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason = 'Cancelled by student' } = req.body;
+
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+    const query = isObjectId ? { _id: id } : { pickupToken: id.toUpperCase().trim() };
+
+    const order = await Order.findOne(query);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Security check: verify ownership
+    if (req.user && req.user.role !== 'staff') {
+      const orderStudentId = order.studentId?._id || order.studentId;
+      if (orderStudentId && orderStudentId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Forbidden — you can only cancel your own orders' });
+      }
+    }
+
+    // Cancellation rule: only allowed while 'Placed'
+    if (order.orderStatus !== 'Placed') {
+      return res.status(400).json({
+        message: `Order cannot be cancelled because it is already "${order.orderStatus}". Please speak to the kitchen counter.`,
+      });
+    }
+
+    // Release time slot capacity if reserved
+    if (order.timeSlotId) {
+      try {
+        await TimeSlot.releaseSlot(order.timeSlotId);
+      } catch (slotErr) {
+        console.warn('Failed to release slot capacity on cancellation:', slotErr.message);
+      }
+    }
+
+    order.orderStatus = 'Cancelled';
+    order.statusTimestamps = order.statusTimestamps || {};
+    order.statusTimestamps.cancelledAt = new Date();
+    if (reason) {
+      order.specialInstructions = `${order.specialInstructions ? order.specialInstructions + ' | ' : ''}Cancellation: ${reason}`;
+    }
+
+    await order.save();
+
+    return res.status(200).json({
+      message: 'Order cancelled successfully and pickup spot released',
+      order,
+    });
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    return res.status(500).json({
+      message: 'Failed to cancel order',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   generateDailyPickupToken,
   createOrder,
   getMyOrders,
   getOrderById,
+  cancelOrder,
 };
