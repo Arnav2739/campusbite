@@ -26,7 +26,7 @@ This document tracks the end-to-end development progress, sprint milestones, and
 | **M3: Menu Catalog Module** | Sprint 1 | Pushkar | ✅ Completed | `MenuItem` schema, `/api/menu` CRUD, `MenuPage.jsx`, `FoodCard.jsx` |
 | **M4: Database Seeder** | Sprint 1 | Pushkar | ✅ Completed | 16 menu items, 8 slots, 2 test users seeded |
 | **M5: Auth Engine & Security** | Sprint 2 | Aditya | ⏳ In Progress | JWT auth, User schema, role guards, axios interceptor |
-| **M6: Frontend Shell & Auth Flow** | Sprint 2 | Riya | ⏳ In Progress | `AuthContext`, `Navbar`, `LandingPage`, `LoginRegister` |
+| **M6: Frontend Shell & Auth Flow** | Sprint 2 | Riya | ✅ Completed | `AuthContext`, `Navbar`, `LandingPage`, `LoginRegister`, `ProfileHistory` |
 | **M7: Time Slots & Cart Engine** | Sprint 2 | Arnav | ✅ Completed | Slot capacity checks, `CartContext`, `CartDrawer`, `CheckoutPage` |
 | **M8: Order Processing & Tracking** | Sprint 3 | Vedanti | ✅ Completed | Order creation, `CB-XXX` token generator, live progress stepper |
 | **M9: Kitchen Queue & Analytics** | Sprint 3 | Anish | ✅ Completed | Kitchen queue Kanban, status updates, sales aggregation |
@@ -61,13 +61,13 @@ This document tracks the end-to-end development progress, sprint milestones, and
 
 ### 3. Riya (Frontend Auth Flow, Navigation Shell & History)
 - **Branch:** `feat/riya-auth-ui`
-- **Progress:** 0% (Scaffolded Starter Ready)
-- [ ] Build `client/src/context/AuthContext.jsx` with localStorage synchronization
-- [ ] Build `client/src/components/ProtectedRoute.jsx` for role-based redirects
-- [ ] Build `client/src/components/Navbar.jsx` with dynamic user profile & cart count badge
-- [ ] Build `client/src/pages/LandingPage.jsx` with hero banner and rush statistics
-- [ ] Build `client/src/pages/LoginRegister.jsx` with role selection tabs
-- [ ] Build `client/src/pages/ProfileHistory.jsx` with past completed orders and quick reorder
+- **Progress:** 100% (Completed across 9 Conventional Commits)
+- [x] Build `client/src/context/AuthContext.jsx` with localStorage synchronization & reactive auth state
+- [x] Build `client/src/components/ProtectedRoute.jsx` for role-based redirects & loading spinner
+- [x] Build `client/src/components/Navbar.jsx` with dynamic user profile, cart count badge & mobile drawer
+- [x] Build `client/src/pages/LandingPage.jsx` with hero banner, 4-step workflow, features & rush statistics
+- [x] Build `client/src/pages/LoginRegister.jsx` with role selection tabs, validation & password strength meter
+- [x] Build `client/src/pages/ProfileHistory.jsx` with order status filter tabs, spending stats & quick reorder
 
 ### 4. Arnav (Time Slots Engine, Cart & Checkout)
 - **Branch:** `feat/arnav-slots-checkout`
