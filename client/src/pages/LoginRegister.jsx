@@ -1,4 +1,5 @@
 // [Riya] LoginRegister.jsx - Student/Staff tabbed login & registration with form validation
+// Enhanced with password strength meter, remember-me, and success feedback
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +17,30 @@ import {
   ChefHat,
   GraduationCap,
   Loader2,
+  CheckCircle2,
+  ShieldCheck,
 } from 'lucide-react';
+
+// Password strength calculator
+const getPasswordStrength = (password) => {
+  if (!password) return { score: 0, label: '', color: '#e5e7eb' };
+  let score = 0;
+  if (password.length >= 6) score++;
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  const levels = [
+    { label: 'Too short', color: '#ef4444' },
+    { label: 'Weak', color: '#f59e0b' },
+    { label: 'Fair', color: '#f59e0b' },
+    { label: 'Good', color: '#3b82f6' },
+    { label: 'Strong', color: '#10b981' },
+  ];
+  const level = levels[Math.min(score, levels.length) - 1] || levels[0];
+  return { score, label: level.label, color: level.color };
+};
 
 const LoginRegister = () => {
   const navigate = useNavigate();
@@ -50,7 +74,12 @@ const LoginRegister = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Password strength (computed live)
+  const passwordStrength = getPasswordStrength(formData.password);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -353,6 +382,35 @@ const LoginRegister = () => {
           {renderField('email', 'Email Address', <Mail size={16} />, 'email', 'you@college.edu')}
           {renderField('password', 'Password', <Lock size={16} />, 'password', '••••••••')}
 
+          {/* Password Strength Indicator (register only) */}
+          {activeTab === 'register' && formData.password && (
+            <div style={{ marginBottom: '16px', marginTop: '-10px' }}>
+              <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                {[1, 2, 3, 4, 5].map((seg) => (
+                  <div
+                    key={seg}
+                    style={{
+                      flex: 1,
+                      height: '4px',
+                      borderRadius: '2px',
+                      background: seg <= passwordStrength.score ? passwordStrength.color : '#e5e7eb',
+                      transition: 'background 0.3s',
+                    }}
+                  />
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: passwordStrength.color, fontWeight: 600 }}>
+                  <ShieldCheck size={11} style={{ verticalAlign: 'text-bottom', marginRight: '3px' }} />
+                  {passwordStrength.label}
+                </span>
+                <span style={{ fontSize: '10px', color: '#9ca3af' }}>
+                  Use 8+ chars, uppercase, number & symbol
+                </span>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'register' && (
             <>
               {renderField(
@@ -378,6 +436,35 @@ const LoginRegister = () => {
                 '+91 98765 43210'
               )}
             </>
+          )}
+
+          {/* Remember Me (login only) */}
+          {activeTab === 'login' && (
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '13px',
+                color: '#6b7280',
+                marginBottom: '12px',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  accentColor: '#ea580c',
+                  cursor: 'pointer',
+                }}
+              />
+              Remember me on this device
+            </label>
           )}
 
           {/* Submit Button */}
