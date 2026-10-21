@@ -2,43 +2,21 @@
   "info": {
     "name": "CampusBite — Staff APIs (Anish)",
     "_postman_id": "anish-staff-dashboard-collection",
-    "description": "Postman collection for all Staff Kitchen & Analytics endpoints.\nBranch: feat/anish-staff-dashboard\nAuthor: Anish\n\nBase URL: http://localhost:5000/api\n\nHow to use:\n1. Set the 'token' collection variable to a valid staff JWT.\n2. Run requests in order: Kitchen Queue → Update Status → Toggle Stock → Analytics.",
+    "description": "Postman collection for all Staff Kitchen & Analytics endpoints.\nBranch: feat/anish-staff-dashboard\nAuthor: Anish\n\nBase URL: http://localhost:5000/api\n\nHow to use:\n1. Set the 'token' collection variable to a valid staff JWT.\n2. Run requests in order: Kitchen Queue → Update Status → Toggle Stock → Analytics → Menu.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:5000/api",
-      "type": "string"
-    },
-    {
-      "key": "token",
-      "value": "PASTE_STAFF_JWT_HERE",
-      "type": "string"
-    },
-    {
-      "key": "orderId",
-      "value": "PASTE_ORDER_ID_HERE",
-      "type": "string"
-    },
-    {
-      "key": "menuItemId",
-      "value": "PASTE_MENU_ITEM_ID_HERE",
-      "type": "string"
-    }
+    { "key": "baseUrl", "value": "http://localhost:5000/api", "type": "string" },
+    { "key": "token", "value": "PASTE_STAFF_JWT_HERE", "type": "string" },
+    { "key": "orderId", "value": "PASTE_ORDER_ID_HERE", "type": "string" },
+    { "key": "menuItemId", "value": "PASTE_MENU_ITEM_ID_HERE", "type": "string" }
   ],
   "item": [
     {
       "name": "1. Get Kitchen Queue",
       "request": {
         "method": "GET",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}",
-            "type": "text"
-          }
-        ],
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }],
         "url": {
           "raw": "{{baseUrl}}/staff/kitchen-queue",
           "host": ["{{baseUrl}}"],
@@ -60,34 +38,23 @@
       "request": {
         "method": "PATCH",
         "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}",
-            "type": "text"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"orderStatus\": \"Preparing\"\n}"
-        },
+        "body": { "mode": "raw", "raw": "{\n  \"orderStatus\": \"Preparing\"\n}" },
         "url": {
           "raw": "{{baseUrl}}/staff/orders/{{orderId}}/status",
           "host": ["{{baseUrl}}"],
           "path": ["staff", "orders", "{{orderId}}", "status"]
         },
-        "description": "PATCH /api/staff/orders/:id/status\n\nMoves an order forward in the lifecycle.\nAllowed values: Placed | Preparing | Ready | Completed | Cancelled\n\nExpected: 200 OK with updated order object.\nExpected (invalid status): 400 Bad Request.\nExpected (order not found): 404 Not Found."
+        "description": "PATCH /api/staff/orders/:id/status\n\nMoves an order forward in the lifecycle.\nAllowed values: Placed | Preparing | Ready | Completed | Cancelled\n\nNow also stamps statusTimestamps.preparingAt on the order document.\n\nExpected: 200 OK with updated order object.\nExpected (invalid status): 400 Bad Request.\nExpected (order not found): 404 Not Found."
       },
       "response": [
         {
           "name": "200 OK — Status Updated",
           "status": "OK",
           "code": 200,
-          "body": "{\n  \"message\": \"Order status updated\",\n  \"order\": {\n    \"_id\": \"67139c99fed11\",\n    \"orderStatus\": \"Preparing\",\n    \"pickupToken\": \"CB-104\",\n    \"studentId\": { \"name\": \"Riya Sharma\", \"rollNumber\": \"CS2026-042\" }\n  }\n}"
+          "body": "{\n  \"message\": \"Order status updated\",\n  \"order\": {\n    \"_id\": \"67139c99fed11\",\n    \"orderStatus\": \"Preparing\",\n    \"pickupToken\": \"CB-104\",\n    \"statusTimestamps\": { \"preparingAt\": \"2026-10-21T08:05:00.000Z\" },\n    \"studentId\": { \"name\": \"Riya Sharma\", \"rollNumber\": \"CS2026-042\" }\n  }\n}"
         },
         {
           "name": "400 Bad Request — Invalid Status",
@@ -108,27 +75,16 @@
       "request": {
         "method": "PATCH",
         "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}",
-            "type": "text"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"orderStatus\": \"Ready\"\n}"
-        },
+        "body": { "mode": "raw", "raw": "{\n  \"orderStatus\": \"Ready\"\n}" },
         "url": {
           "raw": "{{baseUrl}}/staff/orders/{{orderId}}/status",
           "host": ["{{baseUrl}}"],
           "path": ["staff", "orders", "{{orderId}}", "status"]
         },
-        "description": "Same endpoint as above — moves order from Preparing → Ready."
+        "description": "Moves order from Preparing → Ready. Stamps statusTimestamps.readyAt."
       },
       "response": []
     },
@@ -137,27 +93,16 @@
       "request": {
         "method": "PATCH",
         "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}",
-            "type": "text"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"orderStatus\": \"Completed\"\n}"
-        },
+        "body": { "mode": "raw", "raw": "{\n  \"orderStatus\": \"Completed\"\n}" },
         "url": {
           "raw": "{{baseUrl}}/staff/orders/{{orderId}}/status",
           "host": ["{{baseUrl}}"],
           "path": ["staff", "orders", "{{orderId}}", "status"]
         },
-        "description": "Marks order as Completed — removes it from kitchen queue view."
+        "description": "Marks order as Completed. Stamps statusTimestamps.completedAt. Removes it from the kitchen queue view."
       },
       "response": []
     },
@@ -165,13 +110,7 @@
       "name": "5. Toggle Menu Item Stock",
       "request": {
         "method": "PATCH",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}",
-            "type": "text"
-          }
-        ],
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }],
         "url": {
           "raw": "{{baseUrl}}/staff/menu/{{menuItemId}}/toggle",
           "host": ["{{baseUrl}}"],
@@ -192,19 +131,13 @@
       "name": "6. Get Daily Analytics",
       "request": {
         "method": "GET",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}",
-            "type": "text"
-          }
-        ],
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }],
         "url": {
           "raw": "{{baseUrl}}/staff/analytics",
           "host": ["{{baseUrl}}"],
           "path": ["staff", "analytics"]
         },
-        "description": "GET /api/staff/analytics\n\nReturns today's canteen performance summary:\n- todayRevenue: total ₹ earned (excludes cancelled orders)\n- totalOrders, completedOrders, pendingOrders, cancelledOrders\n- topSellingItems: top 5 items by quantity sold\n\nExpected: 200 OK with analytics object."
+        "description": "GET /api/staff/analytics\n\nReturns today's canteen performance summary via MongoDB $group aggregation pipeline:\n- todayRevenue: total earned in Rs (excludes cancelled orders)\n- totalOrders, completedOrders, pendingOrders, cancelledOrders\n- topSellingItems: top 5 items by quantity sold ($unwind + $group)\n\nExpected: 200 OK with analytics object."
       },
       "response": [
         {
@@ -212,6 +145,27 @@
           "status": "OK",
           "code": 200,
           "body": "{\n  \"todayRevenue\": 14250,\n  \"totalOrders\": 128,\n  \"completedOrders\": 114,\n  \"pendingOrders\": 14,\n  \"cancelledOrders\": 3,\n  \"topSellingItems\": [\n    { \"name\": \"Crispy Samosa (2 pcs)\", \"count\": 64 },\n    { \"name\": \"Cold Coffee with Ice Cream\", \"count\": 45 },\n    { \"name\": \"Special Veg Thali\", \"count\": 32 },\n    { \"name\": \"Paneer Kathi Roll\", \"count\": 28 },\n    { \"name\": \"Masala Chai\", \"count\": 21 }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "7. Get All Menu Items (Staff Stock View)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }],
+        "url": {
+          "raw": "{{baseUrl}}/staff/menu",
+          "host": ["{{baseUrl}}"],
+          "path": ["staff", "menu"]
+        },
+        "description": "GET /api/staff/menu\n\nReturns all menu items sorted by category then name.\nUsed by the Stock Manager tab in StaffDashboard.jsx to display\nthe full item list with availability toggle buttons.\n\nExpected: 200 OK — array of MenuItem documents."
+      },
+      "response": [
+        {
+          "name": "200 OK — Menu Items",
+          "status": "OK",
+          "code": 200,
+          "body": "[\n  {\n    \"_id\": \"67139a01bce23\",\n    \"name\": \"Crispy Samosa (2 pcs)\",\n    \"category\": \"Snacks\",\n    \"price\": 30,\n    \"isVeg\": true,\n    \"isAvailable\": true,\n    \"prepTime\": 5\n  },\n  {\n    \"_id\": \"67139a01bce24\",\n    \"name\": \"Cold Coffee with Ice Cream\",\n    \"category\": \"Beverages\",\n    \"price\": 60,\n    \"isVeg\": true,\n    \"isAvailable\": false,\n    \"prepTime\": 3\n  }\n]"
         }
       ]
     }
