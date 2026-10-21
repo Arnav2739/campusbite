@@ -41,6 +41,7 @@ const ProfileHistory = () => {
   const [error, setError] = useState('');
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [reorderFeedback, setReorderFeedback] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
 
   // Fetch order history
   const fetchOrders = useCallback(async () => {
@@ -90,7 +91,18 @@ const ProfileHistory = () => {
 
   // Order statistics
   const completedOrders = orders.filter((o) => o.orderStatus === 'Completed');
+  const activeOrders = orders.filter((o) => ['Placed', 'Preparing', 'Ready'].includes(o.orderStatus));
+  const cancelledOrders = orders.filter((o) => o.orderStatus === 'Cancelled');
   const totalSpent = completedOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+  // Filtered orders based on active tab
+  const filteredOrders = orders.filter((order) => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'active') return ['Placed', 'Preparing', 'Ready'].includes(order.orderStatus);
+    if (activeFilter === 'completed') return order.orderStatus === 'Completed';
+    if (activeFilter === 'cancelled') return order.orderStatus === 'Cancelled';
+    return true;
+  });
 
   return (
     <div
@@ -347,6 +359,59 @@ const ProfileHistory = () => {
             </button>
           </div>
 
+          {/* Filter Tabs */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '6px',
+              marginBottom: '20px',
+              overflowX: 'auto',
+              paddingBottom: '4px',
+            }}
+          >
+            {[
+              { key: 'all', label: 'All', count: orders.length },
+              { key: 'active', label: 'Active', count: activeOrders.length },
+              { key: 'completed', label: 'Completed', count: completedOrders.length },
+              { key: 'cancelled', label: 'Cancelled', count: cancelledOrders.length },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveFilter(tab.key)}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '20px',
+                  border: `1.5px solid ${activeFilter === tab.key ? '#ea580c' : '#e5e7eb'}`,
+                  background: activeFilter === tab.key ? '#fff7ed' : '#fff',
+                  color: activeFilter === tab.key ? '#ea580c' : '#6b7280',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  fontFamily: 'inherit',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                {tab.label}
+                <span
+                  style={{
+                    fontSize: '10px',
+                    padding: '1px 6px',
+                    borderRadius: '10px',
+                    background: activeFilter === tab.key ? '#ea580c' : '#f3f4f6',
+                    color: activeFilter === tab.key ? '#fff' : '#9ca3af',
+                    fontWeight: 700,
+                  }}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
           {/* Loading State */}
           {loading && (
             <div
@@ -405,7 +470,22 @@ const ProfileHistory = () => {
           {/* Orders List */}
           {!loading &&
             !error &&
-            orders.map((order) => {
+            filteredOrders.length === 0 && orders.length > 0 && (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '36px 16px',
+                  color: '#9ca3af',
+                }}
+              >
+                <p style={{ fontSize: '14px', fontWeight: 500, margin: 0 }}>
+                  No {activeFilter} orders found
+                </p>
+              </div>
+            )}
+          {!loading &&
+            !error &&
+            filteredOrders.map((order) => {
               const isExpanded = expandedOrder === order._id;
               const statusConf = STATUS_CONFIG[order.orderStatus] || STATUS_CONFIG.Placed;
 
