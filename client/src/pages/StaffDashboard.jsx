@@ -14,8 +14,10 @@ import {
   AlertCircle,
   XCircle,
   IndianRupee,
-  Star,
   Flame,
+  Package,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 
 // ─── Status config: colour + label for each order state ────────────────────
@@ -150,10 +152,13 @@ const OrderCard = ({ order, onStatusChange, loading }) => {
 const StaffDashboard = () => {
   const [queue, setQueue] = useState([]);
   const [analytics, setAnalytics] = useState(null);
-  const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'analytics'
+  const [menuItems, setMenuItems] = useState([]);
+  const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'stock' | 'analytics'
   const [queueLoading, setQueueLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [menuLoading, setMenuLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
+  const [togglingId, setTogglingId] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [error, setError] = useState('');
 
@@ -185,13 +190,45 @@ const StaffDashboard = () => {
     }
   }, []);
 
+  // Fetch all menu items for stock manager
+  const fetchMenuItems = useCallback(async () => {
+    setMenuLoading(true);
+    try {
+      const { data } = await axiosInstance.get('/staff/menu');
+      setMenuItems(data);
+    } catch {
+      setError('Failed to load menu items.');
+    } finally {
+      setMenuLoading(false);
+    }
+  }, []);
+
+  // Toggle stock availability for a menu item
+  const handleToggleStock = async (itemId) => {
+    setTogglingId(itemId);
+    try {
+      const { data } = await axiosInstance.patch(`/staff/menu/${itemId}/toggle`);
+      // Optimistic update in local list
+      setMenuItems((prev) =>
+        prev.map((item) =>
+          item._id === itemId ? { ...item, isAvailable: data.menuItem.isAvailable } : item
+        )
+      );
+    } catch {
+      setError('Failed to toggle item. Please try again.');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   useEffect(() => {
     fetchQueue();
     fetchAnalytics();
+    fetchMenuItems();
     // Auto-refresh queue every 30 seconds
     const interval = setInterval(fetchQueue, 30000);
     return () => clearInterval(interval);
-  }, [fetchQueue, fetchAnalytics]);
+  }, [fetchQueue, fetchAnalytics, fetchMenuItems]);
 
   // Status update handler
   const handleStatusChange = async (orderId, newStatus) => {
@@ -278,6 +315,17 @@ const StaffDashboard = () => {
             )}
           </button>
           <button
+            onClick={() => setActiveTab('stock')}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === 'stock'
+                ? 'bg-orange-500 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <Package className="w-4 h-4" />
+            Stock Manager
+          </button>
+          <button
             onClick={() => setActiveTab('analytics')}
             className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
               activeTab === 'analytics'
@@ -318,8 +366,93 @@ const StaffDashboard = () => {
             )}
           </>
         )}
+        {/* ══════════ STOCK MANAGER TAB ══════════ */}
+        {activeTab === 'stock' && (
+          <>
+            {menuLoading ? (
+              <div className="flex items-center justify-center py-24 text-gray-400 gap-3">
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                <span>Loading menu items...</span>
+              </div>
+            ) : menuItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 text-gray-400 gap-2">
+                <Package className="w-10 h-10" />
+                <p>No menu items found.</p>
+              </div>
+            ) : (
+              (() => {
+                // Group items by category
+                const categories = [...new Set(menuItems.map((i) => i.category))];
+                return (
+                  <div className="space-y-6">
+                    {categories.map((cat) => (
+                      <div key={cat} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        {/* Category header */}
+                        <div className="px-5 py-3 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-gray-100">
+                          <h2 className="text-sm font-bold text-orange-700 uppercase tracking-wide">{cat}</h2>
+                        </div>
+                        {/* Items list */}
+                        <ul className="divide-y divide-gray-50">
+                          {menuItems
+                            .filter((item) => item.category === cat)
+                            .map((item) => (
+                              <li
+                                key={item._id}
+                                className={`flex items-center justify-between px-5 py-3 transition-colors ${
+                                  !item.isAvailable ? 'bg-gray-50/70' : ''
+                                }`}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  {/* Veg / non-veg dot */}
+                                  <span
+                                    className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                                      item.isVeg ? 'bg-emerald-500' : 'bg-red-500'
+                                    }`}
+                                  />
+                                  <div className="min-w-0">
+                                    <p
+                                      className={`text-sm font-semibold truncate ${
+                                        item.isAvailable ? 'text-gray-900' : 'text-gray-400 line-through'
+                                      }`}
+                                    >
+                                      {item.name}
+                                    </p>
+                                    <p className="text-xs text-gray-400">₹{item.price}</p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handleToggleStock(item._id)}
+                                  disabled={togglingId === item._id}
+                                  title={item.isAvailable ? 'Mark as Sold Out' : 'Mark as Available'}
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    item.isAvailable
+                                      ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                      : 'bg-red-50 text-red-600 hover:bg-red-100'
+                                  }`}
+                                >
+                                  {togglingId === item._id ? (
+                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                  ) : item.isAvailable ? (
+                                    <ToggleRight className="w-4 h-4" />
+                                  ) : (
+                                    <ToggleLeft className="w-4 h-4" />
+                                  )}
+                                  {item.isAvailable ? 'In Stock' : 'Sold Out'}
+                                </button>
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()
+            )}
+          </>
+        )}
 
         {/* ══════════ ANALYTICS TAB ══════════ */}
+
         {activeTab === 'analytics' && (
           <>
             {analyticsLoading ? (
