@@ -1,17 +1,41 @@
-// [Anish] staffController.js
-// Handles: Kitchen Queue API, Status update PATCH, Menu stock toggle,
-//          Staff menu list, Daily analytics (MongoDB aggregation pipeline)
-// Branch: feat/anish-staff-dashboard
-// Updated: uses statusTimestamps + $group aggregation after teammates' model enhancements
+/**
+ * @file staffController.js
+ * @description Express route handlers for the CampusBite Kitchen Staff module.
+ *              Covers: live kitchen queue, order status lifecycle, menu stock
+ *              management, and daily sales analytics via MongoDB aggregation.
+ * @author Anish (feat/anish-staff-dashboard)
+ * @module staffController
+ */
 
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
 
-// ---------------------------------------------------------------------------
-// GET /api/staff/kitchen-queue
-// Returns all active orders (Placed | Preparing | Ready) sorted by timeSlot
-// then createdAt — so staff see oldest/highest-priority orders first.
-// ---------------------------------------------------------------------------
+/** Valid order status values — mirrors the Order model enum */
+const VALID_STATUSES = ['Placed', 'Preparing', 'Ready', 'Completed', 'Cancelled'];
+
+/**
+ * Maps each order status to its corresponding statusTimestamps field path.
+ * Used in updateOrderStatus to stamp the exact transition time.
+ * @type {Object.<string, string>}
+ */
+const STATUS_TIMESTAMP_MAP = {
+  Preparing: 'statusTimestamps.preparingAt',
+  Ready:     'statusTimestamps.readyAt',
+  Completed: 'statusTimestamps.completedAt',
+  Cancelled: 'statusTimestamps.cancelledAt',
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/staff/kitchen-queue
+ * @description Returns all active orders (Placed | Preparing | Ready), sorted by
+ *   pickup time slot first, then by createdAt ascending — ensuring the kitchen
+ *   always processes the most time-critical orders first.
+ * @access Staff Only (protect + staffOnly middleware)
+ * @returns {Order[]} 200 — Array of populated active orders.
+ * @returns {object}  500 — Internal server error message.
+ */
 const getKitchenQueue = async (req, res) => {
   try {
     const activeOrders = await Order.find({
@@ -27,16 +51,24 @@ const getKitchenQueue = async (req, res) => {
   }
 };
 
-// ---------------------------------------------------------------------------
-// PATCH /api/staff/orders/:id/status
-// Staff can move an order through: Placed → Preparing → Ready → Completed
-// or mark it Cancelled. Only valid enum values are accepted.
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * PATCH /api/staff/orders/:id/status
+ * @description Moves an order through its lifecycle stages:
+ *   Placed → Preparing → Ready → Completed (or Cancelled at any point).
+ *   Automatically records the exact transition timestamp via statusTimestamps.
+ * @param {string} req.params.id         - MongoDB ObjectId of the order.
+ * @param {string} req.body.orderStatus  - Target status (must be in VALID_STATUSES).
+ * @access Staff Only
+ * @returns {object} 200 — { message, order } — updated order document.
+ * @returns {object} 400 — Invalid status value supplied.
+ * @returns {object} 404 — Order not found.
+ * @returns {object} 500 — Internal server error.
+ */
 const updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { orderStatus } = req.body;
-
-  const VALID_STATUSES = ['Placed', 'Preparing', 'Ready', 'Completed', 'Cancelled'];
 
   if (!orderStatus || !VALID_STATUSES.includes(orderStatus)) {
     return res.status(400).json({
@@ -45,17 +77,10 @@ const updateOrderStatus = async (req, res) => {
   }
 
   try {
-    // Build timestamp update — stamp the exact time for each lifecycle stage
-    const now = new Date();
-    const timestampField = {
-      Preparing: 'statusTimestamps.preparingAt',
-      Ready: 'statusTimestamps.readyAt',
-      Completed: 'statusTimestamps.completedAt',
-      Cancelled: 'statusTimestamps.cancelledAt',
-    }[orderStatus];
-
+    // Stamp the transition timestamp for the target status (if applicable)
+    const timestampField = STATUS_TIMESTAMP_MAP[orderStatus];
     const updatePayload = { orderStatus };
-    if (timestampField) updatePayload[timestampField] = now;
+    if (timestampField) updatePayload[timestampField] = new Date();
 
     const order = await Order.findByIdAndUpdate(
       id,
@@ -73,11 +98,19 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-// ---------------------------------------------------------------------------
-// PATCH /api/staff/menu/:id/toggle
-// Toggles the isAvailable flag on a MenuItem.
-// Staff use this to instantly mark items as sold-out or back in stock.
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * PATCH /api/staff/menu/:id/toggle
+ * @description Inverts the `isAvailable` flag on a MenuItem document.
+ *   Staff press this to instantly mark an item sold-out or restore it.
+ *   The updated item is returned so the frontend can reflect the change immediately.
+ * @param {string} req.params.id - MongoDB ObjectId of the MenuItem.
+ * @access Staff Only
+ * @returns {object} 200 — { message, menuItem } — updated menu item.
+ * @returns {object} 404 — Menu item not found.
+ * @returns {object} 500 — Internal server error.
+ */
 const toggleMenuItemStock = async (req, res) => {
   const { id } = req.params;
 
@@ -100,11 +133,17 @@ const toggleMenuItemStock = async (req, res) => {
   }
 };
 
-// ---------------------------------------------------------------------------
-// GET /api/staff/menu
-// Returns all menu items for the staff stock management panel.
-// Staff use this to see what's available and toggle stock status.
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/staff/menu
+ * @description Returns every MenuItem sorted by category then name alphabetically.
+ *   Powers the Stock Manager tab in StaffDashboard.jsx, giving staff a
+ *   complete view of all items with their current availability status.
+ * @access Staff Only
+ * @returns {MenuItem[]} 200 — Sorted array of all menu items.
+ * @returns {object}     500 — Internal server error.
+ */
 const getMenuItems = async (req, res) => {
   try {
     const items = await MenuItem.find({}).sort({ category: 1, name: 1 });
@@ -114,17 +153,31 @@ const getMenuItems = async (req, res) => {
   }
 };
 
-// ---------------------------------------------------------------------------
-// GET /api/staff/analytics
-// Returns today's revenue, order counts, and top 5 selling items.
-// Uses MongoDB $group aggregation pipeline — efficient even at scale.
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/staff/analytics
+ * @description Computes today's sales performance using two MongoDB aggregation
+ *   pipelines for efficiency (avoids loading all documents into Node memory):
+ *
+ *   Pipeline 1 — Order-level stats ($match → $group):
+ *     Calculates todayRevenue, totalOrders, completedOrders, pendingOrders,
+ *     cancelledOrders using conditional $sum expressions.
+ *
+ *   Pipeline 2 — Item-level sell counts ($match → $unwind → $group → $sort → $limit):
+ *     Flattens each order's items array, groups by item name, sums quantities,
+ *     and returns the top 5 best-selling items of the day.
+ *
+ * @access Staff Only
+ * @returns {object} 200 — Analytics summary object with topSellingItems array.
+ * @returns {object} 500 — Internal server error.
+ */
 const getStaffAnalytics = async (req, res) => {
   try {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    // ── Step 1: order-level stats via $group ──────────────────────────────
+    // ── Pipeline 1: order-level stats ────────────────────────────────────────
     const [orderStats] = await Order.aggregate([
       {
         $match: {
@@ -138,11 +191,7 @@ const getStaffAnalytics = async (req, res) => {
           totalOrders: { $sum: 1 },
           todayRevenue: {
             $sum: {
-              $cond: [
-                { $ne: ['$orderStatus', 'Cancelled'] },
-                '$totalAmount',
-                0,
-              ],
+              $cond: [{ $ne: ['$orderStatus', 'Cancelled'] }, '$totalAmount', 0],
             },
           },
           completedOrders: {
@@ -150,11 +199,7 @@ const getStaffAnalytics = async (req, res) => {
           },
           pendingOrders: {
             $sum: {
-              $cond: [
-                { $in: ['$orderStatus', ['Placed', 'Preparing']] },
-                1,
-                0,
-              ],
+              $cond: [{ $in: ['$orderStatus', ['Placed', 'Preparing']] }, 1, 0],
             },
           },
           cancelledOrders: {
@@ -164,7 +209,7 @@ const getStaffAnalytics = async (req, res) => {
       },
     ]);
 
-    // ── Step 2: item-level sell counts via $unwind + $group ───────────────
+    // ── Pipeline 2: top-selling items ────────────────────────────────────────
     const topSellingItems = await Order.aggregate([
       {
         $match: {
@@ -186,10 +231,10 @@ const getStaffAnalytics = async (req, res) => {
     ]);
 
     res.status(200).json({
-      todayRevenue: orderStats?.todayRevenue || 0,
-      totalOrders: orderStats?.totalOrders || 0,
+      todayRevenue:    orderStats?.todayRevenue    || 0,
+      totalOrders:     orderStats?.totalOrders     || 0,
       completedOrders: orderStats?.completedOrders || 0,
-      pendingOrders: orderStats?.pendingOrders || 0,
+      pendingOrders:   orderStats?.pendingOrders   || 0,
       cancelledOrders: orderStats?.cancelledOrders || 0,
       topSellingItems,
     });
@@ -197,6 +242,8 @@ const getStaffAnalytics = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch analytics', error: error.message });
   }
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = {
   getKitchenQueue,
