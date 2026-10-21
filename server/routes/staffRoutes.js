@@ -9,6 +9,7 @@ const {
   getKitchenQueue,
   updateOrderStatus,
   toggleMenuItemStock,
+  getMenuItems,
   getStaffAnalytics,
 } = require('../controllers/staffController');
 
@@ -17,6 +18,9 @@ router.use(protect, staffOnly);
 
 // GET  /api/staff/kitchen-queue     → live kitchen order queue
 router.get('/kitchen-queue', getKitchenQueue);
+
+// GET  /api/staff/menu               → all menu items for stock management
+router.get('/menu', getMenuItems);
 
 // PATCH /api/staff/orders/:id/status → update a single order's status
 router.patch('/orders/:id/status', updateOrderStatus);

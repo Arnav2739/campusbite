@@ -1,6 +1,8 @@
 // [Anish] staffController.js
-// Handles: Kitchen Queue API, Status update PATCH, Menu stock toggle, Daily analytics
+// Handles: Kitchen Queue API, Status update PATCH, Menu stock toggle,
+//          Staff menu list, Daily analytics (MongoDB aggregation pipeline)
 // Branch: feat/anish-staff-dashboard
+// Updated: uses statusTimestamps + $group aggregation after teammates' model enhancements
 
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
@@ -43,9 +45,21 @@ const updateOrderStatus = async (req, res) => {
   }
 
   try {
+    // Build timestamp update — stamp the exact time for each lifecycle stage
+    const now = new Date();
+    const timestampField = {
+      Preparing: 'statusTimestamps.preparingAt',
+      Ready: 'statusTimestamps.readyAt',
+      Completed: 'statusTimestamps.completedAt',
+      Cancelled: 'statusTimestamps.cancelledAt',
+    }[orderStatus];
+
+    const updatePayload = { orderStatus };
+    if (timestampField) updatePayload[timestampField] = now;
+
     const order = await Order.findByIdAndUpdate(
       id,
-      { orderStatus },
+      { $set: updatePayload },
       { new: true, runValidators: true }
     ).populate('studentId', 'name rollNumber');
 
@@ -87,53 +101,96 @@ const toggleMenuItemStock = async (req, res) => {
 };
 
 // ---------------------------------------------------------------------------
+// GET /api/staff/menu
+// Returns all menu items for the staff stock management panel.
+// Staff use this to see what's available and toggle stock status.
+// ---------------------------------------------------------------------------
+const getMenuItems = async (req, res) => {
+  try {
+    const items = await MenuItem.find({}).sort({ category: 1, name: 1 });
+    res.status(200).json(items);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch menu items', error: error.message });
+  }
+};
+
+// ---------------------------------------------------------------------------
 // GET /api/staff/analytics
 // Returns today's revenue, order counts, and top 5 selling items.
-// "Today" is computed using midnight local time.
+// Uses MongoDB $group aggregation pipeline — efficient even at scale.
 // ---------------------------------------------------------------------------
 const getStaffAnalytics = async (req, res) => {
   try {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    const todayOrders = await Order.find({
-      createdAt: { $gte: startOfToday },
-      paymentStatus: 'Completed',
-    });
+    // ── Step 1: order-level stats via $group ──────────────────────────────
+    const [orderStats] = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfToday },
+          paymentStatus: 'Completed',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          todayRevenue: {
+            $sum: {
+              $cond: [
+                { $ne: ['$orderStatus', 'Cancelled'] },
+                '$totalAmount',
+                0,
+              ],
+            },
+          },
+          completedOrders: {
+            $sum: { $cond: [{ $eq: ['$orderStatus', 'Completed'] }, 1, 0] },
+          },
+          pendingOrders: {
+            $sum: {
+              $cond: [
+                { $in: ['$orderStatus', ['Placed', 'Preparing']] },
+                1,
+                0,
+              ],
+            },
+          },
+          cancelledOrders: {
+            $sum: { $cond: [{ $eq: ['$orderStatus', 'Cancelled'] }, 1, 0] },
+          },
+        },
+      },
+    ]);
 
-    const totalOrders = todayOrders.length;
-    const completedOrders = todayOrders.filter((o) => o.orderStatus === 'Completed').length;
-    const pendingOrders = todayOrders.filter(
-      (o) => o.orderStatus === 'Placed' || o.orderStatus === 'Preparing'
-    ).length;
-    const cancelledOrders = todayOrders.filter((o) => o.orderStatus === 'Cancelled').length;
-
-    const todayRevenue = todayOrders
-      .filter((o) => o.orderStatus !== 'Cancelled')
-      .reduce((sum, o) => sum + o.totalAmount, 0);
-
-    // Aggregate item sell-count across all today's orders
-    const itemCountMap = {};
-    todayOrders.forEach((order) => {
-      order.items.forEach((item) => {
-        if (!itemCountMap[item.name]) {
-          itemCountMap[item.name] = 0;
-        }
-        itemCountMap[item.name] += item.quantity;
-      });
-    });
-
-    const topSellingItems = Object.entries(itemCountMap)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+    // ── Step 2: item-level sell counts via $unwind + $group ───────────────
+    const topSellingItems = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfToday },
+          paymentStatus: 'Completed',
+          orderStatus: { $ne: 'Cancelled' },
+        },
+      },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.name',
+          count: { $sum: '$items.quantity' },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
+      { $project: { _id: 0, name: '$_id', count: 1 } },
+    ]);
 
     res.status(200).json({
-      todayRevenue,
-      totalOrders,
-      completedOrders,
-      pendingOrders,
-      cancelledOrders,
+      todayRevenue: orderStats?.todayRevenue || 0,
+      totalOrders: orderStats?.totalOrders || 0,
+      completedOrders: orderStats?.completedOrders || 0,
+      pendingOrders: orderStats?.pendingOrders || 0,
+      cancelledOrders: orderStats?.cancelledOrders || 0,
       topSellingItems,
     });
   } catch (error) {
@@ -145,5 +202,6 @@ module.exports = {
   getKitchenQueue,
   updateOrderStatus,
   toggleMenuItemStock,
+  getMenuItems,
   getStaffAnalytics,
 };
