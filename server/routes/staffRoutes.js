@@ -1,6 +1,13 @@
-// [Anish] staffRoutes.js
-// Mounts at: /api/staff  (pre-wired in server.js — DO NOT touch server.js)
-// Branch: feat/anish-staff-dashboard
+/**
+ * @file staffRoutes.js
+ * @description Express routing definitions for all CampusBite Kitchen Staff APIs.
+ *              Mounted at `/api/staff` in the central Express app.
+ *              Enforces two-layer middleware security on all sub-routes:
+ *                1. `protect`   — validates JWT token from Authorization header
+ *                2. `staffOnly` — verifies user.role === 'staff'
+ * @author Anish (feat/anish-staff-dashboard)
+ * @module routes/staffRoutes
+ */
 
 const express = require('express');
 const router = express.Router();
@@ -13,22 +20,42 @@ const {
   getStaffAnalytics,
 } = require('../controllers/staffController');
 
-// All staff routes are protected — must be logged in AND have role=staff
+// All staff routes are strictly protected — must be authenticated with role='staff'
 router.use(protect, staffOnly);
 
-// GET  /api/staff/kitchen-queue     → live kitchen order queue
+/**
+ * @route   GET /api/staff/kitchen-queue
+ * @desc    Fetch active orders in kitchen queue (Placed, Preparing, Ready)
+ * @access  Private / Staff Only
+ */
 router.get('/kitchen-queue', getKitchenQueue);
 
-// GET  /api/staff/menu               → all menu items for stock management
+/**
+ * @route   GET /api/staff/menu
+ * @desc    Retrieve all menu items grouped for staff stock management
+ * @access  Private / Staff Only
+ */
 router.get('/menu', getMenuItems);
 
-// PATCH /api/staff/orders/:id/status → update a single order's status
+/**
+ * @route   PATCH /api/staff/orders/:id/status
+ * @desc    Update order lifecycle status (Placed -> Preparing -> Ready -> Completed / Cancelled)
+ * @access  Private / Staff Only
+ */
 router.patch('/orders/:id/status', updateOrderStatus);
 
-// PATCH /api/staff/menu/:id/toggle  → flip isAvailable on a menu item
+/**
+ * @route   PATCH /api/staff/menu/:id/toggle
+ * @desc    Toggle menu item availability flag (isAvailable) in real-time
+ * @access  Private / Staff Only
+ */
 router.patch('/menu/:id/toggle', toggleMenuItemStock);
 
-// GET  /api/staff/analytics          → today's revenue & top sellers
+/**
+ * @route   GET /api/staff/analytics
+ * @desc    Get kitchen sales analytics (today's revenue, completed count, top sellers)
+ * @access  Private / Staff Only
+ */
 router.get('/analytics', getStaffAnalytics);
 
 module.exports = router;
