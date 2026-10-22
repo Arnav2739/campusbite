@@ -154,6 +154,7 @@ const StaffDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'stock' | 'analytics'
+  const [queueFilter, setQueueFilter] = useState('ALL'); // 'ALL' | 'Placed' | 'Preparing' | 'Ready'
   const [queueLoading, setQueueLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [menuLoading, setMenuLoading] = useState(false);
@@ -255,6 +256,10 @@ const StaffDashboard = () => {
   const preparing = queue.filter((o) => o.orderStatus === 'Preparing');
   const ready = queue.filter((o) => o.orderStatus === 'Ready');
   const orderedQueue = [...placed, ...preparing, ...ready];
+  const displayedQueue =
+    queueFilter === 'ALL'
+      ? orderedQueue
+      : orderedQueue.filter((o) => o.orderStatus === queueFilter);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -341,6 +346,82 @@ const StaffDashboard = () => {
         {/* ══════════ QUEUE TAB ══════════ */}
         {activeTab === 'queue' && (
           <>
+            {/* Quick Status Count & Filter Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+              <button
+                onClick={() => setQueueFilter('ALL')}
+                className={`p-3.5 rounded-xl border text-left transition-all ${
+                  queueFilter === 'ALL'
+                    ? 'bg-gray-900 border-gray-900 text-white shadow-md'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider">All Active</span>
+                  <span className={`text-lg font-black ${queueFilter === 'ALL' ? 'text-white' : 'text-gray-900'}`}>
+                    {queue.length}
+                  </span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setQueueFilter(queueFilter === 'Placed' ? 'ALL' : 'Placed')}
+                className={`p-3.5 rounded-xl border text-left transition-all ${
+                  queueFilter === 'Placed'
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-md'
+                    : 'bg-blue-50/70 border-blue-200 text-blue-800 hover:border-blue-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full ${queueFilter === 'Placed' ? 'bg-white' : 'bg-blue-500'} animate-pulse`} />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Placed</span>
+                  </div>
+                  <span className={`text-lg font-black ${queueFilter === 'Placed' ? 'text-white' : 'text-blue-900'}`}>
+                    {placed.length}
+                  </span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setQueueFilter(queueFilter === 'Preparing' ? 'ALL' : 'Preparing')}
+                className={`p-3.5 rounded-xl border text-left transition-all ${
+                  queueFilter === 'Preparing'
+                    ? 'bg-amber-500 border-amber-500 text-white shadow-md'
+                    : 'bg-amber-50/70 border-amber-200 text-amber-800 hover:border-amber-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full ${queueFilter === 'Preparing' ? 'bg-white' : 'bg-amber-500'} animate-pulse`} />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Preparing</span>
+                  </div>
+                  <span className={`text-lg font-black ${queueFilter === 'Preparing' ? 'text-white' : 'text-amber-900'}`}>
+                    {preparing.length}
+                  </span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setQueueFilter(queueFilter === 'Ready' ? 'ALL' : 'Ready')}
+                className={`p-3.5 rounded-xl border text-left transition-all ${
+                  queueFilter === 'Ready'
+                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                    : 'bg-emerald-50/70 border-emerald-200 text-emerald-800 hover:border-emerald-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full ${queueFilter === 'Ready' ? 'bg-white' : 'bg-emerald-500'}`} />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Ready</span>
+                  </div>
+                  <span className={`text-lg font-black ${queueFilter === 'Ready' ? 'text-white' : 'text-emerald-900'}`}>
+                    {ready.length}
+                  </span>
+                </div>
+              </button>
+            </div>
+
             {queueLoading ? (
               <div className="flex items-center justify-center py-24 text-gray-400 gap-3">
                 <RefreshCw className="w-5 h-5 animate-spin" />
@@ -352,9 +433,19 @@ const StaffDashboard = () => {
                 <p className="font-semibold text-gray-500">All caught up! No active orders.</p>
                 <p className="text-sm">New orders will appear here automatically.</p>
               </div>
+            ) : displayedQueue.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-3 bg-white rounded-2xl border border-gray-100 p-8">
+                <p className="font-semibold text-gray-600">No orders currently in "{queueFilter}" status.</p>
+                <button
+                  onClick={() => setQueueFilter('ALL')}
+                  className="text-xs font-semibold text-orange-600 hover:text-orange-700 bg-orange-50 px-3 py-1.5 rounded-lg transition"
+                >
+                  Show all active orders ({queue.length})
+                </button>
+              </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {orderedQueue.map((order) => (
+                {displayedQueue.map((order) => (
                   <OrderCard
                     key={order._id}
                     order={order}
