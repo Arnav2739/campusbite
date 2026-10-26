@@ -12,7 +12,7 @@ This document tracks the end-to-end development progress, sprint milestones, and
 
 - **Phase 1 (Lead Setup & Foundation):** ✅ 100% Completed
 - **Phase 2 (Individual Feature Branches):** ✅ 100% Completed (All 6 members merged to `main`)
-- **Phase 3 (Integration & QA Testing):** ⏳ In Progress (Build & Syntax Verified)
+- **Phase 3 (Integration & QA Testing):** ✅ 100% Completed (20/20 APIs Verified, Guest Auth Gated, SSO Demo Quick-Fill)
 - **Phase 4 (Final Deployment & Documentation):** 📅 Scheduled
 
 ---
@@ -24,13 +24,13 @@ This document tracks the end-to-end development progress, sprint milestones, and
 | **M1: Monorepo Scaffolding & DevOps** | Sprint 1 | Pushkar | ✅ Completed | Docker MongoDB, `.env`, `.gitignore`, `start.bat` |
 | **M2: Core Hubs Pre-Wiring** | Sprint 1 | Pushkar | ✅ Completed | `server.js` route mounts & `App.jsx` React Router hubs |
 | **M3: Menu Catalog Module** | Sprint 1 | Pushkar | ✅ Completed | `MenuItem` schema, `/api/menu` CRUD, `MenuPage.jsx`, `FoodCard.jsx` |
-| **M4: Database Seeder** | Sprint 1 | Pushkar | ✅ Completed | 16 menu items, 8 slots, 2 test users seeded |
+| **M4: Database Seeder** | Sprint 1 | Pushkar | ✅ Completed | 16 menu items, 8 slots, 4 demo users seeded |
 | **M5: Auth Engine & Security** | Sprint 2 | Aditya | ✅ Completed | JWT auth, User schema, role guards, axios interceptor |
 | **M6: Frontend Shell & Auth Flow** | Sprint 2 | Riya | ✅ Completed | `AuthContext`, `Navbar`, `LandingPage`, `LoginRegister`, `ProfileHistory` |
 | **M7: Time Slots & Cart Engine** | Sprint 2 | Arnav | ✅ Completed | Slot capacity checks, `CartContext`, `CartDrawer`, `CheckoutPage` |
 | **M8: Order Processing & Tracking** | Sprint 3 | Vedanti | ✅ Completed | Order creation, `CB-XXX` token generator, live progress stepper |
 | **M9: Kitchen Queue & Analytics** | Sprint 3 | Anish | ✅ Completed | Kitchen queue Kanban, status updates, sales aggregation |
-| **M10: Postman Testing & Project Review** | Sprint 4 | Team | 📅 Scheduled | Postman test suite, final slides, and viva preparation |
+| **M10: End-to-End QA & Hardening** | Sprint 4 | Pushkar / Team | ✅ Completed | 20/20 automated tests passed, guest auth gating, quick-fill demo SSO |
 
 ---
 
