@@ -94,21 +94,23 @@ const Navbar = () => {
               <ChefHat size={15} /> Kitchen Dashboard
             </Link>
           ) : (
-            // Students see Menu and Order Tracking
             <>
+              {/* Menu is always visible */}
               <Link to="/menu" style={linkStyle('/menu')}>
                 <UtensilsCrossed size={15} /> Menu
               </Link>
-              <Link to="/order-tracking" style={linkStyle('/order-tracking')}>
-                Order Tracking
-              </Link>
+              {/* Order Tracking & My Orders visible only when signed in */}
+              {isAuthenticated && (
+                <>
+                  <Link to="/order-tracking" style={linkStyle('/order-tracking')}>
+                    Order Tracking
+                  </Link>
+                  <Link to="/history" style={linkStyle('/history')}>
+                    <History size={15} /> My Orders
+                  </Link>
+                </>
+              )}
             </>
-          )}
-
-          {isAuthenticated && !isStaff && (
-            <Link to="/history" style={linkStyle('/history')}>
-              <History size={15} /> My Orders
-            </Link>
           )}
         </div>
 
@@ -355,15 +357,17 @@ const Navbar = () => {
               <Link to="/menu" onClick={closeMobile} style={mobileLinkStyle}>
                 <UtensilsCrossed size={18} /> Menu
               </Link>
-              <Link to="/order-tracking" onClick={closeMobile} style={mobileLinkStyle}>
-                Order Tracking
-              </Link>
+              {isAuthenticated && (
+                <>
+                  <Link to="/order-tracking" onClick={closeMobile} style={mobileLinkStyle}>
+                    Order Tracking
+                  </Link>
+                  <Link to="/history" onClick={closeMobile} style={mobileLinkStyle}>
+                    <History size={18} /> My Orders
+                  </Link>
+                </>
+              )}
             </>
-          )}
-          {isAuthenticated && !isStaff && (
-            <Link to="/history" onClick={closeMobile} style={mobileLinkStyle}>
-              <History size={18} /> My Orders
-            </Link>
           )}
           {isAuthenticated && (
             <button
