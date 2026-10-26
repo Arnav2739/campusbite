@@ -161,7 +161,7 @@ const createOrder = async (req, res) => {
       timeSlotId: reservedSlotId,
       slotLabel,
       pickupToken,
-      paymentMethod,
+      paymentMethod: String(paymentMethod || 'upi').toLowerCase(),
       paymentStatus: 'Completed',
       orderStatus: 'Placed',
       specialInstructions: specialInstructions ? specialInstructions.slice(0, 250) : '',
