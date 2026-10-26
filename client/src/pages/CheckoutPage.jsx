@@ -23,6 +23,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 
 // Fallback pickup slots matching backend seed data
@@ -39,6 +40,7 @@ const FALLBACK_SLOTS = [
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const {
     cartItems,
     cartTotal,
@@ -62,9 +64,21 @@ const CheckoutPage = () => {
   const [processingStepText, setProcessingStepText] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
-  // Student Info Details
-  const [studentName, setStudentName] = useState('Riya Sharma');
-  const [rollNumber, setRollNumber] = useState('CS2026-042');
+  // Student Info Details from authenticated session
+  const [studentName, setStudentName] = useState(user?.name || 'Student');
+  const [rollNumber, setRollNumber] = useState(user?.rollNumber || 'N/A');
+
+  // Enforce authentication on checkout mount
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/checkout' }, replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (user?.name) setStudentName(user.name);
+    if (user?.rollNumber) setRollNumber(user.rollNumber);
+  }, [user]);
 
   // Fetch available slots from backend with resilient fallback
   useEffect(() => {
@@ -144,32 +158,31 @@ const CheckoutPage = () => {
         };
 
         const res = await axiosInstance.post('/orders', orderPayload);
-        if (res.data && res.data.pickupToken) {
-          createdOrderData = res.data;
+        if (res.data) {
+          createdOrderData = res.data.order || res.data;
+          if (!createdOrderData.pickupToken && res.data.pickupToken) {
+            createdOrderData.pickupToken = res.data.pickupToken;
+          }
         }
       } catch (err) {
-        console.warn('Backend /api/orders unavailable, creating resilient local order:', err.message);
+        console.error('Backend /api/orders failed:', err);
+        setProcessingState('idle');
+        setIsPaymentModalOpen(false);
+        setSlotError(
+          err.response?.data?.message ||
+            'Order placement failed. Please verify your authentication session and try again.'
+        );
+        return;
       }
 
-      // Generate realistic daily pickup token (e.g. CB-248) if backend is still in scaffolding
       if (!createdOrderData) {
-        const randomNum = Math.floor(100 + Math.random() * 900);
-        createdOrderData = {
-          _id: `order_${Date.now()}`,
-          pickupToken: `CB-${randomNum}`,
-          orderStatus: 'Placed',
-          paymentStatus: 'Completed',
-          totalAmount: grandTotal,
-          slotLabel: selectedSlot.slotLabel,
-          timeSlotId: selectedSlot._id,
-          items: cartItems,
-          studentName,
-          rollNumber,
-          createdAt: new Date().toISOString(),
-        };
-      } else {
-        createdOrderData.slotLabel = selectedSlot.slotLabel;
+        setProcessingState('idle');
+        setIsPaymentModalOpen(false);
+        setSlotError('Could not verify order confirmation from the kitchen server.');
+        return;
       }
+
+      createdOrderData.slotLabel = selectedSlot.slotLabel;
 
       // Save latest order in localStorage for OrderTrackingPage & ProfileHistory integration
       try {
