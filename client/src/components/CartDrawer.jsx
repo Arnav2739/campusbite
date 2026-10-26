@@ -13,9 +13,11 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 const CartDrawer = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const {
     cartItems,
     isCartOpen,
@@ -56,7 +58,11 @@ const CartDrawer = () => {
 
   const handleProceedToCheckout = () => {
     closeCart();
-    navigate('/checkout');
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/checkout' } });
+    } else {
+      navigate('/checkout');
+    }
   };
 
   const handleBrowseMenu = () => {
@@ -248,17 +254,26 @@ const CartDrawer = () => {
                 </div>
               </div>
 
+              {/* Sign In Notice if Guest */}
+              {!isAuthenticated && (
+                <div className="mb-2 p-2.5 bg-amber-50 border border-amber-200/80 rounded-xl text-xs text-amber-800 text-center font-medium">
+                  🔒 Sign in to select your pickup slot & complete order
+                </div>
+              )}
+
               {/* Checkout Button */}
               <button
                 onClick={handleProceedToCheckout}
                 className="w-full py-3.5 px-4 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/25 flex items-center justify-between transition-all active:scale-[0.98]"
               >
                 <div className="text-left">
-                  <span className="block text-xs font-normal text-orange-100">Proceed with Tray</span>
-                  <span>Pay ₹{grandTotal}</span>
+                  <span className="block text-xs font-normal text-orange-100">
+                    {isAuthenticated ? 'Proceed with Tray' : 'Guest Student'}
+                  </span>
+                  <span>{isAuthenticated ? `Pay ₹${grandTotal}` : `Tray Total ₹${grandTotal}`}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20">
-                  <span>Checkout</span>
+                  <span>{isAuthenticated ? 'Checkout' : 'Sign In to Order'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </button>
