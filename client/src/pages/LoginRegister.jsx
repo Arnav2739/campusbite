@@ -312,6 +312,79 @@ const LoginRegister = () => {
           ))}
         </div>
 
+        {/* Quick-Fill Demo Role Selector on Sign In */}
+        {activeTab === 'login' && (
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', margin: '0 0 8px', textAlign: 'center' }}>
+              Quick Demo Fill:
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    email: 'student@campusbite.com',
+                    password: 'student123',
+                  }));
+                  setError('');
+                  setFieldErrors({});
+                }}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  border: '1.5px solid #fed7aa',
+                  background: '#fff7ed',
+                  color: '#c2410c',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <GraduationCap size={15} /> Student Login
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    email: 'staff@campusbite.com',
+                    password: 'staff123',
+                  }));
+                  setError('');
+                  setFieldErrors({});
+                }}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  border: '1.5px solid #fed7aa',
+                  background: '#fff7ed',
+                  color: '#c2410c',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <ChefHat size={15} /> Staff Login
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Role Toggle (only for register) */}
         {activeTab === 'register' && (
           <div
