@@ -37,11 +37,25 @@ function App() {
                 {/* [Pushkar] Menu catalog */}
                 <Route path="/menu" element={<MenuPage />} />
 
-                {/* [Arnav] Cart checkout & time slots */}
-                <Route path="/checkout" element={<CheckoutPage />} />
+                {/* [Arnav] Cart checkout & time slots (Requires sign in) */}
+                <Route
+                  path="/checkout"
+                  element={
+                    <ProtectedRoute>
+                      <CheckoutPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-                {/* [Vedanti] Order token & status tracking */}
-                <Route path="/order-tracking" element={<OrderTrackingPage />} />
+                {/* [Vedanti] Order token & status tracking (Requires sign in) */}
+                <Route
+                  path="/order-tracking"
+                  element={
+                    <ProtectedRoute>
+                      <OrderTrackingPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* [Riya] Student profile & past orders */}
                 <Route
