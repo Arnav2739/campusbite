@@ -4,15 +4,15 @@ This document tracks the end-to-end development progress, sprint milestones, and
 
 ---
 
-## 🚦 Overall Project Status: `Phase 2 in Progress (3 of 6 Modules Merged)`
+## 🚦 Overall Project Status: `Phase 2 Complete (All 6 Modules Merged & Functional)`
 
 ```text
-[████████████████░░░░░░░░] 60% Total Project Completion
+[████████████████████████] 100% Feature Completion (Ready for Final QA & Viva)
 ```
 
 - **Phase 1 (Lead Setup & Foundation):** ✅ 100% Completed
-- **Phase 2 (Individual Feature Branches):** ⏳ In Progress (Pushkar, Arnav, Anish completed; Aditya, Riya, Vedanti in progress)
-- **Phase 3 (Integration & QA Testing):** 📅 Scheduled
+- **Phase 2 (Individual Feature Branches):** ✅ 100% Completed (All 6 members merged to `main`)
+- **Phase 3 (Integration & QA Testing):** ⏳ In Progress (Build & Syntax Verified)
 - **Phase 4 (Final Deployment & Documentation):** 📅 Scheduled
 
 ---
@@ -25,7 +25,7 @@ This document tracks the end-to-end development progress, sprint milestones, and
 | **M2: Core Hubs Pre-Wiring** | Sprint 1 | Pushkar | ✅ Completed | `server.js` route mounts & `App.jsx` React Router hubs |
 | **M3: Menu Catalog Module** | Sprint 1 | Pushkar | ✅ Completed | `MenuItem` schema, `/api/menu` CRUD, `MenuPage.jsx`, `FoodCard.jsx` |
 | **M4: Database Seeder** | Sprint 1 | Pushkar | ✅ Completed | 16 menu items, 8 slots, 2 test users seeded |
-| **M5: Auth Engine & Security** | Sprint 2 | Aditya | ⏳ In Progress | JWT auth, User schema, role guards, axios interceptor |
+| **M5: Auth Engine & Security** | Sprint 2 | Aditya | ✅ Completed | JWT auth, User schema, role guards, axios interceptor |
 | **M6: Frontend Shell & Auth Flow** | Sprint 2 | Riya | ✅ Completed | `AuthContext`, `Navbar`, `LandingPage`, `LoginRegister`, `ProfileHistory` |
 | **M7: Time Slots & Cart Engine** | Sprint 2 | Arnav | ✅ Completed | Slot capacity checks, `CartContext`, `CartDrawer`, `CheckoutPage` |
 | **M8: Order Processing & Tracking** | Sprint 3 | Vedanti | ✅ Completed | Order creation, `CB-XXX` token generator, live progress stepper |
@@ -102,6 +102,29 @@ This document tracks the end-to-end development progress, sprint milestones, and
 
 ## 📝 Daily Change Log
  
+### [2026-10-21] - Frontend Auth Shell, Navigation & Profile History Release
+- **Author:** Riya
+- **Branch:** `feat/riya-auth-ui`
+- Delivered complete milestone M6 split cleanly across 9 atomic conventional commits (PR #9):
+  1. `feat(auth-context)`: Built reactive `AuthContext` provider with `localStorage` token/user hydration and centralized login/logout handlers.
+  2. `feat(protected-route)`: Implemented `ProtectedRoute` guard with role authorization checks (`student` vs `staff`) and loading spinner.
+  3. `feat(navbar)`: Built responsive `Navbar.jsx` with dynamic role navigation, cart item badge counter, user dropdown profile menu, and mobile navigation drawer.
+  4. `feat(landing-page)`: Built rich `LandingPage.jsx` with hero banner, 4-step ordering workflow, feature cards, and canteen rush indicators.
+  5. `feat(login-register)`: Implemented tabbed `LoginRegister.jsx` with real-time validation, password strength meter, remember-me toggle, and role-based redirects (`/menu` vs `/staff-dashboard`).
+  6. `feat(profile-history)`: Built `ProfileHistory.jsx` with student profile card, spending analytics, expandable order item trays, status filter tabs, and one-click reorder button.
+
+### [2026-10-20] - JWT Authentication Engine, Security Middleware & API Client Release
+- **Author:** Aditya
+- **Branch:** `feat/aditya-auth-security`
+- Delivered complete milestone M5 across 8 atomic conventional commits (PR #5):
+  1. `feat(model)`: Enhanced Mongoose `User` schema with `bcryptjs` salt hashing pre-save hooks, `matchPassword` method, and avatar virtuals.
+  2. `feat(auth)`: Implemented `POST /api/auth/register` validating college email/roll number and returning signed JWT token.
+  3. `feat(auth)`: Implemented `POST /api/auth/login` credentials verification returning JWT and role payload.
+  4. `feat(middleware)`: Built `protect` JWT Bearer token authentication middleware.
+  5. `feat(auth)`: Implemented `staffOnly` role authorization guard and `GET /api/auth/me` profile lookup endpoint.
+  6. `feat(client)`: Configured frontend `axiosInstance.js` with request Bearer interceptor and 401 response auto-logout interceptor.
+  7. `feat(security)`: Added request input validation middleware and comprehensive global error middleware.
+
 ### [2026-10-20] - Order Processing Engine, Pickup Token & Live Tracking Release
 - **Author:** Vedanti
 - **Branch:** `feat/vedanti-orders-tracking`
