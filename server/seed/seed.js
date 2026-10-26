@@ -29,10 +29,24 @@ const seedData = async () => {
     const users = await User.insertMany([
       {
         name: 'Riya Sharma',
+        email: 'student@campusbite.com',
+        rollNumber: 'CS2026-042',
+        passwordHash: studentPassword,
+        role: 'student',
+      },
+      {
+        name: 'Riya Sharma',
         email: 'riya.student@campus.edu',
         rollNumber: 'CS2026-042',
         passwordHash: studentPassword,
         role: 'student',
+      },
+      {
+        name: 'Chef Ramesh (Staff)',
+        email: 'staff@campusbite.com',
+        rollNumber: 'STAFF-001',
+        passwordHash: staffPassword,
+        role: 'staff',
       },
       {
         name: 'Chef Ramesh (Staff)',
